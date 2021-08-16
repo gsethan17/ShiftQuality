@@ -14,12 +14,14 @@ def train() :
     ## path setup
     train_path = config['PATH']['TRAIN']
     val_path = config['PATH']['VALIDATION']
-    test_path = config['PATH']['TEST']
 
     ## data shape setup
     n_timewindow = int(config['DATA']['N_TIMEWINDOW'])
     n_feature = int(config['DATA']['N_FEATURE'])
     latent_size = int(config['DATA']['LATENT_SIZE'])
+
+    train_path = os.path.join(train_path, str(n_timewindow))
+    val_path = os.path.join(val_path, str(n_timewindow))
 
     ## model setup
     model_key = config['MODEL']['KEY']

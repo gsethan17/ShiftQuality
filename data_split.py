@@ -17,6 +17,10 @@ test_path = config['PATH']['TEST']
 ## data shape setup
 n_timewindow = int(config['DATA']['N_TIMEWINDOW'])
 
+train_path = os.path.join(train_path, str(n_timewindow))
+val_path = os.path.join(val_path, str(n_timewindow))
+test_path = os.path.join(test_path, str(n_timewindow))
+
 
 if not os.path.isdir(train_path) :
     os.mkdir(train_path)
