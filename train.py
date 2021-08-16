@@ -1,4 +1,4 @@
-from utils import Dataloader, FC_AE, gpu_limit, dir_exist_check, get_metric, get_optimizer
+from utils import Dataloader, gpu_limit, dir_exist_check, get_metric, get_optimizer, get_model
 import tensorflow as tf
 import configparser
 import pandas as pd
@@ -27,7 +27,7 @@ def train() :
     save_dir = os.path.join(os.getcwd(), 'results_train', model_key)
     dir_exist_check([save_dir])
 
-    save_path = os.path.join(save_dir, "{}".format(len(glob.glob(save_dir))))
+    save_path = os.path.join(save_dir, "{}".format(len(glob.glob(os.path.join(save_dir, '*')))))
     dir_exist_check([save_path])
 
 
@@ -71,8 +71,7 @@ def train() :
 
 
     # MODEL LOADER
-    if model_key == 'MLP' :
-       model = FC_AE(n_timewindow=n_timewindow, n_feature=n_feature, latent_size=latent_size)
+    model = get_model(model_key, n_timewindow, n_feature, latent_size)
 
     results = {}
     results['train_loss'] = []
@@ -85,7 +84,7 @@ def train() :
             train_x, _ = train_data
             with tf.GradientTape() as tape :
                 recon = model(train_x)
-                loss = LOSS(recon, train_x)
+                loss, _, _ = LOSS(recon, train_x)
                 train_loss.append(loss)
 
             gradients = tape.gradient(loss, model.trainable_variables)
@@ -99,7 +98,7 @@ def train() :
             val_x, _ = val_data
 
             recon = model(val_x)
-            loss = LOSS(recon, val_x)
+            loss, _, _ = LOSS(recon, val_x)
             val_loss.append(loss)
         val_loader.on_epoch_end()
         print("Validation is completed...")
@@ -112,12 +111,13 @@ def train() :
         model.save_weights(os.path.join(save_path, "{}epoch_weights".format(epoch + 1)))
 
         if epoch > 0:
-            if val_loss_avg < min(results['val_loss']):
+            if val_loss_avg.numpy() < min(results['val_loss']):
+                print(val_loss_avg.numpy(), min(results['val_loss']))
                 # save best weights
-                model.save_weights(os.path.join(save_path, "{}epoch_weights_isBest".format(epoch +1)))
+                model.save_weights(os.path.join(save_path, "Best_weights".format(epoch +1)))
 
-        results['train_loss'].append(train_loss_avg)
-        results['val_loss'].append(val_loss_avg)
+        results['train_loss'].append(train_loss_avg.numpy())
+        results['val_loss'].append(val_loss_avg.numpy())
 
         print(
             "{:>3} / {:>3} || train_loss:{:8.4f}, val_loss:{:8.4f}".format(
@@ -128,6 +128,8 @@ def train() :
         # early stop
         if epoch > 5:
             if results['val_loss'][-5] < min(results['val_loss'][-4:]):
+                print(results['val_loss'][-5])
+                print(min(results['val_loss'][-4:]))
                 break
 
         df = pd.DataFrame(results)

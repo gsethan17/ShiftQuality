@@ -20,10 +20,15 @@ def rmse_loss(recon, origin) :
     error = tf.math.divide(error, (n_timewindow*n_feature))
     error = tf.math.sqrt(error)
 
-    # calculate avrage of rmse value by batch
-    error = tf.reduce_mean(error)
+    # calculate mean of rmse value by batch for train
+    error_mean = tf.reduce_mean(error)
 
-    return error
+    # calculate median and maximum of rmse value by batch for test
+    error_array = np.array(error)
+    error_median = np.median(error_array)
+    error_maximum = np.max(error_array)
+
+    return error_mean, error_median, error_maximum
 
 def get_metric(key) :
     if key == 'rmse' :
@@ -36,6 +41,13 @@ def get_optimizer(key, lr) :
         OPTIMIZER = Adam(learning_rate=lr)
 
     return OPTIMIZER
+
+def get_model(key, n_timewindow, n_feature, latent_size) :
+    if key == 'MLP' :
+        model = FC_AE(n_timewindow=n_timewindow, n_feature=n_feature, latent_size=latent_size)
+
+
+    return model
 
 
 class Dataloader(Sequence) :
@@ -58,6 +70,7 @@ class Dataloader(Sequence) :
             np.random.shuffle(self.indices)
 
     def get_inputs(self, path):
+        filename = os.path.basename(path)
         df = pd.read_csv(path, index_col=0)
         col_list = ['HEV_AccelPdlVal', 'HEV_EngSpdVal', \
                    'IEB_StrkDpthPcVal',
@@ -85,21 +98,21 @@ class Dataloader(Sequence) :
             inputs.append(array[n:n+self.timewindow])
         inputs = np.array(inputs)
 
-        return inputs
+        return inputs, filename
 
 
     def __getitem__(self, idx):
         indices = self.indices[idx*self.batch_size:(idx+1)*self.batch_size]
 
         for i in indices :
-            batch_x = self.get_inputs(self.data_list[i])
+            batch_x, filename = self.get_inputs(self.data_list[i])
 
         if self.label :
             if os.path.basename(self.data_list[i]).split('_')[0] == 'abnormal' :
                 batch_y = True
             else:
                 batch_y = False
-            return batch_x, batch_y
+            return batch_x, batch_y, filename
         else :
             return batch_x, batch_x
 
