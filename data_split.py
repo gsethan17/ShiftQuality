@@ -4,6 +4,7 @@ import random
 import shutil
 import pandas as pd
 import configparser
+from utils import dir_exist_check
 
 # BASIC CONFIGURATION
 config = configparser.ConfigParser()
@@ -21,6 +22,7 @@ train_path = os.path.join(train_path, str(n_timewindow))
 val_path = os.path.join(val_path, str(n_timewindow))
 test_path = os.path.join(test_path, str(n_timewindow))
 
+dir_exist_check([train_path, val_path, test_path])
 
 if not os.path.isdir(train_path) :
     os.mkdir(train_path)

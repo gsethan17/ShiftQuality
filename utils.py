@@ -180,6 +180,11 @@ def gpu_limit(GB) :
     else:
         print('GPU is not available')
 
+def dir_exist_check(paths) :
+    for path in paths :
+        if not os.path.isdir(path) :
+            os.makedirs(path)
+
 if __name__ == '__main__' :
     data_path = '/home/gsethan/Documents/ShiftQuality/scaled_resample_data'
 

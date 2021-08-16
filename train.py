@@ -1,4 +1,4 @@
-from utils import Dataloader, FC_AE, rmse_loss, gpu_limit
+from utils import Dataloader, FC_AE, rmse_loss, gpu_limit, dir_exist_check
 import tensorflow as tf
 from tensorflow.keras.optimizers import Adam
 import configparser
@@ -26,12 +26,11 @@ def train() :
     ## model setup
     model_key = config['MODEL']['KEY']
     save_dir = os.path.join(os.getcwd(), 'results', model_key)
-    if not os.path.isdir(save_dir) :
-        os.makedirs(save_dir)
+    dir_exist_check([save_dir])
 
     save_path = os.path.join(save_dir, "{}".format(len(glob.glob(save_dir))))
-    if not os.path.isdir(save_path):
-        os.makedirs(save_path)
+    dir_exist_check([save_path])
+
 
     ## train setup
     metric = config['TRAIN']['METRIC']
