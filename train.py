@@ -1,6 +1,5 @@
-from utils import Dataloader, FC_AE, rmse_loss, gpu_limit, dir_exist_check
+from utils import Dataloader, FC_AE, gpu_limit, dir_exist_check, get_metric, get_optimizer
 import tensorflow as tf
-from tensorflow.keras.optimizers import Adam
 import configparser
 import pandas as pd
 import os
@@ -25,7 +24,7 @@ def train() :
 
     ## model setup
     model_key = config['MODEL']['KEY']
-    save_dir = os.path.join(os.getcwd(), 'results', model_key)
+    save_dir = os.path.join(os.getcwd(), 'results_train', model_key)
     dir_exist_check([save_dir])
 
     save_path = os.path.join(save_dir, "{}".format(len(glob.glob(save_dir))))
@@ -34,12 +33,11 @@ def train() :
 
     ## train setup
     metric = config['TRAIN']['METRIC']
-    if metric == 'rmse' :
-        LOSS = rmse_loss
+    LOSS = get_metric(metric)
+
     optimizer = config['TRAIN']['OPTIMIZER']
     learning_rate = float(config['TRAIN']['LEARNING_RATE'])
-    if optimizer == 'adam' :
-        OPTIMIZER = Adam(learning_rate=learning_rate)
+    OPTIMIZER = get_optimizer(optimizer, learning_rate)
 
     epochs = int(config['TRAIN']['EPOCHS'])
 

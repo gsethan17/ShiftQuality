@@ -6,6 +6,7 @@ import tensorflow as tf
 from tensorflow.keras.utils import Sequence
 from tensorflow.keras.models import Sequential, Model
 from tensorflow.keras.layers import LSTM, RepeatVector, TimeDistributed, Dense, Dropout, Flatten
+from tensorflow.keras.optimizers import Adam
 
 def rmse_loss(recon, origin) :
     n_timewindow = origin.shape[1]
@@ -24,6 +25,17 @@ def rmse_loss(recon, origin) :
 
     return error
 
+def get_metric(key) :
+    if key == 'rmse' :
+        LOSS = rmse_loss
+
+    return LOSS
+
+def get_optimizer(key, lr) :
+    if key == 'adam' :
+        OPTIMIZER = Adam(learning_rate=lr)
+
+    return OPTIMIZER
 
 
 class Dataloader(Sequence) :
