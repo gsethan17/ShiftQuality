@@ -210,25 +210,3 @@ def dir_exist_check(paths) :
         if not os.path.isdir(path) :
             os.makedirs(path)
 
-if __name__ == '__main__' :
-    data_path = '/home/gsethan/Documents/ShiftQuality/scaled_resample_data'
-
-    n_timewindow = 10
-    n_feature = 7
-    n_vector = 32
-
-    loader = Dataloader(data_path, batch_size=1, timewindow=n_timewindow)
-    # print(loader.path)
-    # print(len(loader.data_list))
-    # print(len(loader))
-    # print(loader[0])
-
-    model = get_lstm_model(n_timewindow, n_feature, n_vector)
-    model.compile(optimizer='adam', loss='mae')
-
-    history = model.fit(loader, epochs = 2)
-
-    plt.figure()
-    plt.plot(history.history['loss'], label = 'Train loss')
-    plt.legend()
-    plt.savefig('result.png')
