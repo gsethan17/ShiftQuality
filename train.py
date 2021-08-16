@@ -64,8 +64,8 @@ def train() :
 
 
     # DATA LOADER
-    train_loader = Dataloader(train_path)
-    val_loader = Dataloader(val_path)
+    train_loader = Dataloader(train_path, timewindow=n_timewindow)
+    val_loader = Dataloader(val_path, timewindow=n_timewindow)
 
     print(len(train_loader), len(val_loader))
 

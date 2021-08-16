@@ -49,7 +49,7 @@ def test() :
 
 
     # DATA LOADER
-    test_loader = Dataloader(test_path, label = True)
+    test_loader = Dataloader(test_path, label = True, timewindow=n_timewindow)
 
     # MODEL LOADER
     model = get_model(model_key, n_timewindow, n_feature, latent_size)
