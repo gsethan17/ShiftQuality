@@ -27,8 +27,9 @@ def rmse_loss(recon, origin) :
     error_array = np.array(error)
     error_median = np.median(error_array)
     error_maximum = np.max(error_array)
+    error_minimum = np.min(error_array)
 
-    return error_mean, error_median, error_maximum
+    return error_mean, error_median, error_maximum, error_minimum
 
 def get_metric(key) :
     if key == 'rmse' :
@@ -209,4 +210,47 @@ def dir_exist_check(paths) :
     for path in paths :
         if not os.path.isdir(path) :
             os.makedirs(path)
+
+class results_analysis() :
+    def __init__(self, results):
+        self.df_total = pd.DataFrame(results)
+        # print(self.df_total)
+        self.df_normal = self.df_total[(self.df_total['label'] == False)]
+        self.df_abnormal = self.df_total[(self.df_total['label'] == True)]
+        self.standards = ['mean', 'median', 'maximum', 'minimum']
+        self.confusion_m = ['CD', 'MD', 'FA', 'CR']
+
+    def get_metric(self):
+        for standard in self.standards :
+            df_total_sorted = self.df_total.copy()
+            df_total_sorted.sort_values(by=standard, ascending=False, inplace=True)
+            df_total_sorted.reset_index(drop=True, inplace=True)
+            print(df_total_sorted)
+
+            # Initialize the confusion matrix value
+            for confusion in self.confusion_m :
+                df_total_sorted[confusion] = pd.Series().copy()
+
+            for i in range(len(self.df_total)) :
+                # Alarm lists
+                df_A = df_total_sorted.copy()[:i+1]
+                CD = len(df_A[df_A['label'] == True])
+                FA = len(df_A[df_A['label'] == False])
+
+                # Reject lists
+                df_R = df_total_sorted.copy()[i+1:]
+                MD = len(df_R[df_R['label'] == True])
+                CR = len(df_R[df_R['label'] == False])
+
+                df_total_sorted['CD'][i]= CD
+                df_total_sorted['FA'][i] = FA
+                df_total_sorted['MD'][i] = MD
+                df_total_sorted['CR'][i] = CR
+
+                print(df_total_sorted)
+
+
+                print(CD, FA, MD, CR, CD+FA+MD+CR)
+                if i == 3 :
+                    break
 

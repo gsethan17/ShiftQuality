@@ -2,7 +2,7 @@ import configparser
 import os
 import glob
 import pandas as pd
-from utils import dir_exist_check, get_metric, gpu_limit, Dataloader, get_model
+from utils import dir_exist_check, get_metric, gpu_limit, Dataloader, get_model, results_analysis
 
 
 def test() :
@@ -23,7 +23,8 @@ def test() :
     ## model setup
     model_key = config['MODEL']['KEY']
     model_version = config['TEST']['VERSION']
-    save_path = os.path.join(os.getcwd(), 'results_test', model_key, model_version)
+    # save_path = os.path.join(os.getcwd(), 'results_test', model_key, model_version)
+    save_path = os.path.join(os.getcwd(), 'results_test', model_key, str(99))
     dir_exist_check([save_path])
 
     ## metric setup
@@ -63,13 +64,14 @@ def test() :
     test_results['mean'] = []
     test_results['median'] = []
     test_results['maximum'] = []
+    test_results['minimum'] = []
 
     for i, test_data in enumerate(test_loader) :
         print("Training : {} / {}".format(i + 1, len(test_loader)), end="\r")
         test_x, test_y, filename = test_data
 
         recon = model(test_x)
-        mean, median, maximum = LOSS(recon, test_x)
+        mean, median, maximum, minimum = LOSS(recon, test_x)
         mean = mean.numpy()
 
         print(mean, median, maximum)
@@ -78,9 +80,11 @@ def test() :
         test_results['mean'].append(mean)
         test_results['median'].append(median)
         test_results['maximum'].append(maximum)
+        test_results['minimum'].append(minimum)
 
-    df = pd.DataFrame(test_results)
-    df.to_csv(os.path.join(save_path, 'Results.csv'), index=False)
+    analysis = results_analysis(test_results)
+    analysis.get_metric()
+    # df.to_csv(os.path.join(save_path, 'Results.csv'), index=False)
 
 if __name__ == '__main__' :
     test()
