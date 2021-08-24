@@ -133,7 +133,7 @@ def train() :
                 break
 
         df = pd.DataFrame(results)
-        df.to_csv(os.path.join(save_path, 'Results.csv'), index=False)
+        df.to_csv(os.path.join(save_path, 'train_results.csv'), index=False)
 
 
 if __name__ == '__main__' :

@@ -2,6 +2,8 @@ import numpy as np
 import pandas as pd
 import os
 import glob
+import seaborn as sns
+from matplotlib import pyplot
 import tensorflow as tf
 from tensorflow.keras.utils import Sequence
 from tensorflow.keras.models import Sequential, Model
@@ -211,6 +213,100 @@ def dir_exist_check(paths) :
         if not os.path.isdir(path) :
             os.makedirs(path)
 
+class WriteResults() :
+    def __init__(self, test_results, results_dic, save_path):
+        self.df_total = pd.DataFrame(test_results)
+        self.dic = results_dic
+        self.standards = self.dic.keys()
+        self.save_path = save_path
+        self.draw_pdf()
+        self.write_rep()
+
+
+    def draw_pdf(self):
+        df_normal = self.df_total[(self.df_total['label'] == False)].copy()
+        df_abnormal = self.df_total[(self.df_total['label'] == True)].copy()
+        for standard in self.standards :
+
+            pyplot.figure()
+            sns.distplot(df_normal[standard], label='normal', color='green')
+            sns.distplot(df_abnormal[standard], label='abnormal', color='red')
+
+            pyplot.legend(prop={'size': 14})
+            pyplot.savefig(os.path.join(self.save_path, standard+'.png'))
+            # pyplot.show()
+
+    def write_rep(self):
+        self.rep = {}
+        self.rep['standard'] = []
+        self.rep['F1'] = []
+        self.rep['Precision'] = []
+        self.rep['Recall'] = []
+        self.rep['AUROC'] = []
+
+        pyplot.figure()
+        recalls = []
+        b_fprs = []
+
+        for standard in self.standards :
+            b_f1 = self.dic[standard]['F1'].max()
+            idx = list(self.dic[standard]['F1']).index(b_f1)
+            precision = self.dic[standard].iloc[idx]['Precision']
+            recall = self.dic[standard].iloc[idx]['Recall']
+            b_fpr = self.dic[standard].iloc[idx]['FRR']
+
+            recalls.append(recall)
+            b_fprs.append(b_fpr)
+
+            TPR = list(self.dic[standard]['Recall'])
+            FPR = list(self.dic[standard]['FRR'])
+
+            # get AUROC score
+            h_flag = False
+            x_st = FPR[0]
+            auc = 0
+            for i in range(len(TPR)-1) :
+                x = FPR[i+1]
+                x_prev = FPR[i]
+
+                y = TPR[i+1]
+                y_prev = TPR[i]
+
+                if y > y_prev :
+                    if h_flag :
+                        x_d = x_prev - x_st
+                        auc += x_d * y_prev
+                    x_st = x
+
+                else :
+                    h_flag = True
+
+                    if i == len(TPR)-2 :
+                        x_d = x - x_st
+                        auc += x_d * y
+            ####
+            self.rep['standard'].append(standard)
+            self.rep['F1'].append(b_f1)
+            self.rep['Precision'].append(precision)
+            self.rep['Recall'].append(recall)
+            self.rep['AUROC'].append(auc)
+
+            # pyplot.plot([0.0, 1.0], [0.0, 1.0], linestyle='--', label='No Skill')
+            pyplot.plot(FPR, TPR, marker='.', label=standard)
+
+        pyplot.scatter(b_fprs, recalls, c='k', zorder=9, label = 'set to maximize the F1 Score')
+        # axis labels
+        pyplot.xlabel('False Positive Rate')
+        pyplot.ylabel('True Positive Rate')
+        # show the legend
+        pyplot.legend()
+        pyplot.savefig(os.path.join(self.save_path, 'ROC.png'))
+
+        df = pd.DataFrame(self.rep)
+        df.set_index('standard', inplace=True)
+        df.to_csv(os.path.join(self.save_path, 'test_results.csv'))
+
+
 class results_analysis() :
     def __init__(self, results):
         self.df_total = pd.DataFrame(results)
@@ -218,39 +314,58 @@ class results_analysis() :
         self.df_normal = self.df_total[(self.df_total['label'] == False)]
         self.df_abnormal = self.df_total[(self.df_total['label'] == True)]
         self.standards = ['mean', 'median', 'maximum', 'minimum']
-        self.confusion_m = ['CD', 'MD', 'FA', 'CR']
+        self.confusion_m_type =['CD', 'MD', 'FA', 'CR', 'Accuracy', 'Precision', 'Recall', 'F1', 'FRR', 'FAR']
+        self.confusion_m_init()
+        self.results_init()
+
+    def results_init(self):
+        self.results = {}
+
+    def confusion_m_init(self):
+        self.confusion_m = {}
+        for confusion in self.confusion_m_type :
+            self.confusion_m[confusion] = []
 
     def get_metric(self):
         for standard in self.standards :
             df_total_sorted = self.df_total.copy()
             df_total_sorted.sort_values(by=standard, ascending=False, inplace=True)
             df_total_sorted.reset_index(drop=True, inplace=True)
-            print(df_total_sorted)
-
-            # Initialize the confusion matrix value
-            for confusion in self.confusion_m :
-                df_total_sorted[confusion] = pd.Series().copy()
 
             for i in range(len(self.df_total)) :
                 # Alarm lists
                 df_A = df_total_sorted.copy()[:i+1]
                 CD = len(df_A[df_A['label'] == True])
                 FA = len(df_A[df_A['label'] == False])
+                self.confusion_m['CD'].append(CD)
+                self.confusion_m['FA'].append(FA)
 
                 # Reject lists
                 df_R = df_total_sorted.copy()[i+1:]
                 MD = len(df_R[df_R['label'] == True])
                 CR = len(df_R[df_R['label'] == False])
+                self.confusion_m['MD'].append(MD)
+                self.confusion_m['CR'].append(CR)
 
-                df_total_sorted['CD'][i]= CD
-                df_total_sorted['FA'][i] = FA
-                df_total_sorted['MD'][i] = MD
-                df_total_sorted['CR'][i] = CR
+                # metric lists
+                self.confusion_m['Accuracy'].append((CD + CR) / (MD + FA))
+                Precision = CD / (CD + FA)
+                Recall = CD / (CD + MD)
 
-                print(df_total_sorted)
+                if Precision == 0.0 and Recall == 0.0 :
+                    F1 = 0.0
+                else :
+                    F1 = 2 * (Recall * Precision) / (Recall + Precision)
+
+                self.confusion_m['Precision'].append(Precision)
+                self.confusion_m['Recall'].append(Recall)
+                self.confusion_m['F1'].append(F1)
+                self.confusion_m['FRR'].append(FA / (FA + CR))
+                self.confusion_m['FAR'].append(MD / (CD + MD))
 
 
-                print(CD, FA, MD, CR, CD+FA+MD+CR)
-                if i == 3 :
-                    break
+            confusion_df = pd.DataFrame(self.confusion_m)
+            self.results[standard] = confusion_df
+            self.confusion_m_init()
 
+        return self.results

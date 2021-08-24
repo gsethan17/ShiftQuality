@@ -2,7 +2,7 @@ import configparser
 import os
 import glob
 import pandas as pd
-from utils import dir_exist_check, get_metric, gpu_limit, Dataloader, get_model, results_analysis
+from utils import dir_exist_check, get_metric, gpu_limit, Dataloader, get_model, results_analysis, WriteResults
 
 
 def test() :
@@ -23,8 +23,7 @@ def test() :
     ## model setup
     model_key = config['MODEL']['KEY']
     model_version = config['TEST']['VERSION']
-    # save_path = os.path.join(os.getcwd(), 'results_test', model_key, model_version)
-    save_path = os.path.join(os.getcwd(), 'results_test', model_key, str(99))
+    save_path = os.path.join(os.getcwd(), 'results_test', model_key, model_version)
     dir_exist_check([save_path])
 
     ## metric setup
@@ -74,7 +73,6 @@ def test() :
         mean, median, maximum, minimum = LOSS(recon, test_x)
         mean = mean.numpy()
 
-        print(mean, median, maximum)
         test_results['filename'].append(filename)
         test_results['label'].append(test_y)
         test_results['mean'].append(mean)
@@ -83,8 +81,13 @@ def test() :
         test_results['minimum'].append(minimum)
 
     analysis = results_analysis(test_results)
-    analysis.get_metric()
-    # df.to_csv(os.path.join(save_path, 'Results.csv'), index=False)
+    analyzed_results = analysis.get_metric()
+    # print(analyzed_results)
+
+    WriteResults(test_results, analyzed_results, save_path)
+
+
+
 
 if __name__ == '__main__' :
     test()
