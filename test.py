@@ -2,8 +2,8 @@ import configparser
 import os
 import glob
 import pandas as pd
-from utils import dir_exist_check, get_metric, gpu_limit, Dataloader, get_model, results_analysis, WriteResults
-
+from utils import dir_exist_check, get_metric, gpu_limit, Dataloader, results_analysis, WriteResults
+from model import get_model
 
 def test() :
     # BASIC CONFIGURATION

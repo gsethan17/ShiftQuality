@@ -1,4 +1,5 @@
-from utils import Dataloader, gpu_limit, dir_exist_check, get_metric, get_optimizer, get_model
+from utils import Dataloader, gpu_limit, dir_exist_check, get_metric, get_optimizer
+from model import get_model
 import tensorflow as tf
 import configparser
 import pandas as pd
