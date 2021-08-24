@@ -98,7 +98,7 @@ def train() :
             val_x, _ = val_data
 
             recon = model(val_x)
-            loss, _, _ = LOSS(recon, val_x)
+            loss, _, _, _ = LOSS(recon, val_x)
             val_loss.append(loss)
         val_loader.on_epoch_end()
         print("Validation is completed...")
