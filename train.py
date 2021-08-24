@@ -43,6 +43,11 @@ def train() :
     epochs = int(config['TRAIN']['EPOCHS'])
 
 
+    # GPU limitation
+    limit_gb = int(config['GPU']['LIMIT'])
+    gpu_limit(limit_gb)
+
+
     # save parameters
     f = open(os.path.join(save_path, "setting.txt"), 'w')
     settings = "Train model : {}\n" \
@@ -60,8 +65,6 @@ def train() :
     f.close()
 
 
-    # GPU limitation
-    gpu_limit(5)
 
 
     # DATA LOADER
