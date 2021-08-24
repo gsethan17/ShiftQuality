@@ -98,8 +98,9 @@ class Dataloader(Sequence) :
     def __getitem__(self, idx):
         indices = self.indices[idx*self.batch_size:(idx+1)*self.batch_size]
 
-        for i in indices :
-            batch_x, filename = self.get_inputs(self.data_list[i])
+        i = indices[0]
+        # for i in indices :
+        batch_x, filename = self.get_inputs(self.data_list[i])
 
         if self.label :
             if os.path.basename(self.data_list[i]).split('_')[0] == 'abnormal' :

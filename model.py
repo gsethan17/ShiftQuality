@@ -3,82 +3,125 @@ from tensorflow.keras.models import Sequential, Model
 from tensorflow.keras.layers import LSTM, RepeatVector, TimeDistributed, Dense, Dropout, Flatten
 
 
-def get_model(key, n_timewindow, n_feature, latent_size) :
-    if key == 'MLP' :
-        model = FC_AE(n_timewindow=n_timewindow, n_feature=n_feature, latent_size=latent_size)
-
+def get_model(key, n_timewindow, n_feature, latent_size, show=False) :
+    model = FC_AE(key=key, n_timewindow=n_timewindow, n_feature=n_feature, latent_size=latent_size, show=show)
 
     return model
 
 
 class FC_Encoder(Model) :
-    def __init__(self, latent_size):
+    def __init__(self, key, latent_size, show=False):
         super().__init__()
+        self.key = key
+        self.show = show
         self.flat = Flatten()
-        self.enc1 = Dense(512, activation = 'relu', name='enc1')
+        if self.key == 'MLP' :
+            self.enc1 = Dense(512, activation = 'relu', name='enc1')
+        elif self.key == 'LSTM' :
+            self.enc1 = LSTM(3, return_sequences=True, name='enc1')
         self.enc2 = Dense(256, activation = 'relu', name='enc2')
         self.enc3 = Dense(128, activation = 'relu', name='enc3')
         self.enc4 = Dense(64, activation = 'relu', name='enc4')
         self.enc5 = Dense(32, activation = 'relu', name='enc5')
         self.enc6 = Dense(latent_size, activation = 'relu', name='enc6')
 
+    def show_shape(self, out):
+        if self.show :
+            print(out.shape)
+
     def call(self, x):
-        x = self.flat(x)
-        out = self.enc1(x)
+        if self.key == 'MLP' :
+            x = self.flat(x)
+            self.show_shape(x)
+            out = self.enc1(x)
+            self.show_shape(out)
+        elif self.key == 'LSTM' :
+            out = self.enc1(x)
+            self.show_shape(out)
+            out = self.flat(out)
+            self.show_shape(out)
         out = self.enc2(out)
+        self.show_shape(out)
         out = self.enc3(out)
+        self.show_shape(out)
         out = self.enc4(out)
+        self.show_shape(out)
         out = self.enc5(out)
+        self.show_shape(out)
         out = self.enc6(out)
+        self.show_shape(out)
 
         return out
 
 
 class FC_Decoder(Model):
-    def __init__(self, out_size):
+    def __init__(self, key, n_timewindow, n_feature, show = False):
         super().__init__()
+        self.key = key
+        self.show = show
         self.dec1 = Dense(32, activation='relu', name='dec1')
         self.dec2 = Dense(64, activation='relu', name='dec2')
         self.dec3 = Dense(128, activation='relu', name='dec3')
         self.dec4 = Dense(256, activation='relu', name='dec4')
         self.dec5 = Dense(512, activation='relu', name='dec5')
-        self.dec6 = Dense(out_size, activation='sigmoid', name='dec6')
+        if self.key == 'MLP' :
+            self.dec6 = Dense(n_timewindow*n_feature, activation='sigmoid', name='dec6')
+        elif self.key == 'LSTM' :
+            self.dec6 = LSTM(n_feature, return_sequences=True, name='dec6')
+            self.repeat = RepeatVector(n_timewindow, name='repeatvector')
+
+    def show_shape(self, out):
+        if self.show :
+            print(out.shape)
 
     def call(self, x):
         out = self.dec1(x)
+        self.show_shape(out)
         out = self.dec2(out)
+        self.show_shape(out)
         out = self.dec3(out)
+        self.show_shape(out)
         out = self.dec4(out)
+        self.show_shape(out)
         out = self.dec5(out)
-        out = self.dec6(out)
+        self.show_shape(out)
+        if self.key == 'MLP' :
+            out = self.dec6(out)
+            self.show_shape(out)
+        elif self.key == 'LSTM' :
+            out = self.repeat(out)
+            self.show_shape(out)
+            out = self.dec6(out)
+            self.show_shape(out)
 
         return out
 
 class FC_AE(Model) :
-    def __init__(self, n_timewindow, n_feature, latent_size):
+    def __init__(self, key, n_timewindow, n_feature, latent_size, show = False):
         super().__init__()
+        self.key = key
+        self.show = show
         self.n_timewindow = n_timewindow
         self.n_feature = n_feature
         self.latent_size = latent_size
-        self.encoder = FC_Encoder(latent_size=self.latent_size)
-        self.decoder = FC_Decoder(out_size = self.n_timewindow*self.n_feature)
+        self.encoder = FC_Encoder(key=self.key, latent_size=self.latent_size, show=self.show)
+        self.decoder = FC_Decoder(self.key, self.n_timewindow, self.n_feature, show=self.show)
         self.flat = Flatten()
 
     def call(self, x):
         batch_size = x.shape[0]
         out = self.encoder(x)
         out = self.decoder(out)
-        out = tf.reshape(out, shape=[batch_size, self.n_timewindow, self.n_feature])
+        if self.key == 'MLP' :
+            out = tf.reshape(out, shape=[batch_size, self.n_timewindow, self.n_feature])
 
         return out
 
-def get_lstm_model(n_timewindow, n_feature, n_vector) :
+def get_lstm_model(n_timewindow, n_feature, latent_size) :
     model = Sequential()
-    model.add(LSTM(n_vector, input_shape=(n_timewindow, n_feature)))
-    model.add(Dropout(rate=0.2))
+    model.add(LSTM(latent_size, input_shape=(n_timewindow, n_feature)))
     model.add(RepeatVector(n_timewindow))
-    model.add(LSTM(n_vector, return_sequences=True))
-    model.add(Dropout(rate=0.2))
+    model.add(LSTM(latent_size, return_sequences=True))
     model.add(TimeDistributed(Dense(n_feature)))
     print(model.summary())
     return model

@@ -73,6 +73,7 @@ def train() :
 
     # MODEL LOADER
     model = get_model(model_key, n_timewindow, n_feature, latent_size)
+    print("Model is loaded!")
 
     results = {}
     results['train_loss'] = []
@@ -85,7 +86,7 @@ def train() :
             train_x, _ = train_data
             with tf.GradientTape() as tape :
                 recon = model(train_x)
-                loss, _, _ = LOSS(recon, train_x)
+                loss, _, _, _ = LOSS(recon, train_x)
                 train_loss.append(loss)
 
             gradients = tape.gradient(loss, model.trainable_variables)
