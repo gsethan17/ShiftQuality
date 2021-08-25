@@ -1,7 +1,7 @@
 import os
 from utils import Dataloader
 from model import get_model
-
+'''
 train_path = '/home/gsethan/Documents/ShiftQuality/train'
 val_path = '/home/gsethan/Documents/ShiftQuality/val'
 test_path = '/home/gsethan/Documents/ShiftQuality/test'
@@ -33,3 +33,20 @@ for i, train_data in enumerate(train_loader):
     recon = FC_autoencoder(train_x)
     print(recon.shape)
     break
+'''
+
+import json
+
+# save parameters
+param = {}
+param['model'] = 'MLP'
+param['n_timewindow'] = 10
+param['n_feature'] = 6
+param['n_latent'] = 10
+param['metric'] = 'rmse'
+param['optimizer'] = 'adam'
+param['learning_rate'] = 0.001
+param['epochs'] = 30
+
+with open('setup.json', 'w', encoding='utf-8') as make_file :
+    json.dump(param, make_file, ensure_ascii=False, indent='\t')

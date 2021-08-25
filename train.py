@@ -4,7 +4,7 @@ import tensorflow as tf
 import configparser
 import pandas as pd
 import os
-import glob
+import json
 
 def train() :
     # BASIC CONFIGURATION
@@ -25,11 +25,6 @@ def train() :
 
     ## model setup
     model_key = config['MODEL']['KEY']
-    save_dir = os.path.join(os.getcwd(), 'results_train', model_key)
-    dir_exist_check([save_dir])
-
-    save_path = os.path.join(save_dir, "{}".format(len(glob.glob(os.path.join(save_dir, '*')))))
-    dir_exist_check([save_path])
 
 
     ## train setup
@@ -42,6 +37,11 @@ def train() :
 
     epochs = int(config['TRAIN']['EPOCHS'])
 
+    # save path setup
+    save_path = os.path.join(os.getcwd(), 'results', model_key, str(n_timewindow), str(learning_rate) + '_' + str(epochs))
+    # dir_exist_check([save_path])
+    os.makedirs(save_path)
+
 
     # GPU limitation
     limit_gb = int(config['GPU']['LIMIT'])
@@ -49,6 +49,21 @@ def train() :
 
 
     # save parameters
+    param = {}
+    param['model'] = model_key
+    param['n_timewindow'] = n_timewindow
+    param['n_feature'] = n_feature
+    param['n_latent'] = latent_size
+    param['metric'] = metric
+    param['optimizer'] = optimizer
+    param['learning_rate'] = learning_rate
+    param['epochs'] = epochs
+
+    json_save_path = os.path.join(save_path, 'setup.json')
+
+    with open(json_save_path, 'w', encoding='utf-8') as make_file :
+        json.dump(param, make_file, ensure_ascii=False, indent='\t')
+    '''
     f = open(os.path.join(save_path, "setting.txt"), 'w')
     settings = "Train model : {}\n" \
                "The size of time window : {}\n" \
@@ -63,7 +78,7 @@ def train() :
     )
     f.write(settings)
     f.close()
-
+    '''
 
 
 

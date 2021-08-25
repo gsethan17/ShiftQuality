@@ -138,6 +138,7 @@ def dir_exist_check(paths) :
 class WriteResults() :
     def __init__(self, test_results, results_dic, save_path):
         self.df_total = pd.DataFrame(test_results)
+        self.df_total.to_csv(os.path.join(save_path, 'test_results_raw.csv'), index=False)
         self.dic = results_dic
         self.standards = self.dic.keys()
         self.save_path = save_path
