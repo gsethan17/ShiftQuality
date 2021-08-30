@@ -38,7 +38,8 @@ def train() :
     epochs = int(config['TRAIN']['EPOCHS'])
 
     # save path setup
-    save_path = os.path.join(os.getcwd(), 'results', model_key, str(n_timewindow), str(learning_rate) + '_' + str(epochs))
+    save_path_base = os.path.join(os.getcwd(), 'results', model_key, str(n_timewindow), str(learning_rate) + '_' + str(epochs))
+    save_path = os.path.join(os.getcwd(), 'results', model_key, str(n_timewindow), str(learning_rate) + '_' + str(epochs), 'train')
     # dir_exist_check([save_path])
     os.makedirs(save_path)
 
@@ -59,7 +60,7 @@ def train() :
     param['learning_rate'] = learning_rate
     param['epochs'] = epochs
 
-    json_save_path = os.path.join(save_path, 'setup.json')
+    json_save_path = os.path.join(save_path_base, 'setup.json')
 
     with open(json_save_path, 'w', encoding='utf-8') as make_file :
         json.dump(param, make_file, ensure_ascii=False, indent='\t')

@@ -41,7 +41,6 @@ def test() :
     # save path setup
     save_path = os.path.join(train_path, 'test')
     dir_exist_check([save_path])
-
     '''
     # save parameters
     f = open(os.path.join(save_path, "setting.txt"), 'w')
@@ -56,6 +55,7 @@ def test() :
     f.write(settings)
     f.close()
     '''
+
 
     # GPU limitation
     limit_gb = int(config['GPU']['LIMIT'])
