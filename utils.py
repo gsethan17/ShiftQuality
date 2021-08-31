@@ -142,18 +142,19 @@ class WriteResults() :
         self.dic = results_dic
         self.standards = self.dic.keys()
         self.save_path = save_path
-        self.draw_pdf()
         self.write_rep()
+        self.draw_pdf()
 
 
     def draw_pdf(self):
         df_normal = self.df_total[(self.df_total['label'] == False)].copy()
         df_abnormal = self.df_total[(self.df_total['label'] == True)].copy()
-        for standard in self.standards :
+        for i, standard in enumerate(self.standards) :
 
             pyplot.figure()
             sns.distplot(df_normal[standard], label='normal', color='green')
             sns.distplot(df_abnormal[standard], label='abnormal', color='red')
+            pyplot.axvline(self.rep['Score'][i], 0, 0.8, linestyle='--', label = 'maximize the F1 Score', color='k')
 
             pyplot.legend(prop={'size': 14})
             pyplot.savefig(os.path.join(self.save_path, standard+'.png'))
@@ -166,6 +167,7 @@ class WriteResults() :
         self.rep['Precision'] = []
         self.rep['Recall'] = []
         self.rep['AUROC'] = []
+        self.rep['Score'] = []
 
         pyplot.figure()
         recalls = []
@@ -177,6 +179,8 @@ class WriteResults() :
             precision = self.dic[standard].iloc[idx]['Precision']
             recall = self.dic[standard].iloc[idx]['Recall']
             b_fpr = self.dic[standard].iloc[idx]['FRR']
+            score = self.dic[standard].iloc[idx]['Score']
+
 
             recalls.append(recall)
             b_fprs.append(b_fpr)
@@ -213,11 +217,12 @@ class WriteResults() :
             self.rep['Precision'].append(precision)
             self.rep['Recall'].append(recall)
             self.rep['AUROC'].append(auc)
+            self.rep['Score'].append(score)
 
             # pyplot.plot([0.0, 1.0], [0.0, 1.0], linestyle='--', label='No Skill')
             pyplot.plot(FPR, TPR, marker='.', label=standard)
 
-        pyplot.scatter(b_fprs, recalls, c='k', zorder=9, label = 'set to maximize the F1 Score')
+        pyplot.scatter(b_fprs, recalls, c='k', zorder=9, label = 'maximize the F1 Score')
         # axis labels
         pyplot.xlabel('False Positive Rate')
         pyplot.ylabel('True Positive Rate')
@@ -237,7 +242,7 @@ class results_analysis() :
         self.df_normal = self.df_total[(self.df_total['label'] == False)]
         self.df_abnormal = self.df_total[(self.df_total['label'] == True)]
         self.standards = ['mean', 'median', 'maximum', 'minimum']
-        self.confusion_m_type =['CD', 'MD', 'FA', 'CR', 'Accuracy', 'Precision', 'Recall', 'F1', 'FRR', 'FAR']
+        self.confusion_m_type =['Score', 'CD', 'MD', 'FA', 'CR', 'Accuracy', 'Precision', 'Recall', 'F1', 'FRR', 'FAR']
         self.confusion_m_init()
         self.results_init()
 
@@ -256,6 +261,9 @@ class results_analysis() :
             df_total_sorted.reset_index(drop=True, inplace=True)
 
             for i in range(len(self.df_total)) :
+                score = df_total_sorted[standard][i]
+                self.confusion_m['Score'].append(score)
+
                 # Alarm lists
                 df_A = df_total_sorted.copy()[:i+1]
                 CD = len(df_A[df_A['label'] == True])

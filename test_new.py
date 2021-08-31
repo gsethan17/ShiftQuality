@@ -9,9 +9,6 @@ def test(main_dir, test_path) :
     config = configparser.ConfigParser()
     config.read('./config.ini')
 
-    # data path
-    test_data_path = config['PATH']['TEST']
-
     # parameters setup
     with open(os.path.join(main_dir, 'setup.json'), 'r') as f :
         json_data = json.load(f)
@@ -27,14 +24,14 @@ def test(main_dir, test_path) :
     test_data_path = os.path.join(test_data_path, str(n_timewindow))
 
     ## model setup
-    model_key = json_data['model']
+    model_key = str(json_data['model'])
 
     ## metric setup
     metric = json_data['metric']
     LOSS = get_metric(metric)
 
-    lr = float(json_data['learning_rate'])
-    epochs = int(json_data['epochs'])
+    # lr = float(json_data['learning_rate'])
+    # epochs = int(json_data['epochs'])
 
     ## path for train results
     train_path = os.path.join(main_dir, 'train')
@@ -49,12 +46,14 @@ def test(main_dir, test_path) :
     gpu_limit(limit_gb)
 
     # DATA LOADER
-    test_loader = Dataloader(test_path, label = True, timewindow=n_timewindow)
+    test_loader = Dataloader(test_data_path, label = True, timewindow=n_timewindow)
 
     # MODEL LOADER
+    # print(model_key, n_timewindow, n_feature, latent_size)
     model = get_model(model_key, n_timewindow, n_feature, latent_size)
     ## load weights
     weight_path = os.path.join(train_path, 'Best_weights')
+    # print(weight_path)
     model.load_weights(weight_path)
 
 
@@ -113,17 +112,20 @@ def make_test_results() :
                main_dir = os.path.join(timewindow_dir, param)
                test_dir = os.path.join(main_dir, 'test')
 
+               print(test_dir)
+
                if os.path.isdir(test_dir) :
-                   break
+                   print("{} {} {} is already done.".format(model_key,
+                                                               timewindow,
+                                                               param))
+                   continue
                else :
                    test(main_dir, test_dir)
 
-               lr = param.split('_')[0]
-               epoch = param.split('_')[1]
-
-               print(model_key, timewindow, lr, epoch)
+               # return -1
 
 
 
 if __name__ == '__main__' :
     make_test_results()
+    print("DONE")
