@@ -31,9 +31,25 @@ def rmse_loss(recon, origin) :
 
     return error_mean, error_median, error_maximum, error_minimum
 
-def get_metric(key) :
+def usad_loss(step, recon, rerecon, origin, n) :
+    loss1, _, _, _ = rmse_loss(recon, origin)
+    loss2, _, _, _ = rmse_loss(rerecon, origin)
+
+    if step == 1 :
+        loss = ((1/n) * loss1) + ((1-(1/n))*loss2)
+
+    elif step == 2 :
+        loss = ((1/n) * loss1) - ((1-(1/n))*loss2)
+
+    return loss
+
+def get_metric(key, model_key) :
     if key == 'rmse' :
-        LOSS = rmse_loss
+        if model_key == 'USAD' :
+            LOSS = usad_loss
+
+        else :
+            LOSS = rmse_loss
 
     return LOSS
 
