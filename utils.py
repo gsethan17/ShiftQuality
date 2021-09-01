@@ -31,17 +31,30 @@ def rmse_loss(recon, origin) :
 
     return error_mean, error_median, error_maximum, error_minimum
 
-def usad_loss(step, recon, rerecon, origin, n) :
-    loss1, _, _, _ = rmse_loss(recon, origin)
-    loss2, _, _, _ = rmse_loss(rerecon, origin)
+def usad_loss(step, recon, rerecon, origin, n=1, a=1) :
+    loss1, loss1_median, loss1_max, loss1_min = rmse_loss(recon, origin)
+    loss2, loss2_median, loss2_max, loss2_min = rmse_loss(rerecon, origin)
 
+    # Step 1 : Train
+    # Step 2 : Validation
+    # Step 3 : Test
     if step == 1 :
         loss = ((1/n) * loss1) + ((1-(1/n))*loss2)
+
+        return loss
 
     elif step == 2 :
         loss = ((1/n) * loss1) - ((1-(1/n))*loss2)
 
-    return loss
+        return loss
+
+    elif step == 3 :
+        mean = (a * loss1) + ((1-a) * loss2)
+        median = (a * loss1_median) + ((1-a) * loss2_median)
+        max = (a * loss1_max) + ((1-a) * loss2_max)
+        min = (a * loss1_min) + ((1-a) * loss2_min)
+
+    return mean.numpy(), median, max, min
 
 def get_metric(key, model_key) :
     if key == 'rmse' :
@@ -179,6 +192,7 @@ class WriteResults() :
     def write_rep(self):
         self.rep = {}
         self.rep['standard'] = []
+        self.rep['Accuracy'] = []
         self.rep['F1'] = []
         self.rep['Precision'] = []
         self.rep['Recall'] = []
@@ -196,6 +210,7 @@ class WriteResults() :
             recall = self.dic[standard].iloc[idx]['Recall']
             b_fpr = self.dic[standard].iloc[idx]['FRR']
             score = self.dic[standard].iloc[idx]['Score']
+            acc = self.dic[standard].iloc[idx]['Accuracy']
 
 
             recalls.append(recall)
@@ -229,6 +244,7 @@ class WriteResults() :
                         auc += x_d * y
             ####
             self.rep['standard'].append(standard)
+            self.rep['Accuracy'].append(acc)
             self.rep['F1'].append(b_f1)
             self.rep['Precision'].append(precision)
             self.rep['Recall'].append(recall)
@@ -295,15 +311,17 @@ class results_analysis() :
                 self.confusion_m['CR'].append(CR)
 
                 # metric lists
-                self.confusion_m['Accuracy'].append((CD + CR) / (MD + FA))
                 Precision = CD / (CD + FA)
                 Recall = CD / (CD + MD)
+
+                Accuracy = (CD + CR) / (CD + MD + FA + CR)
 
                 if Precision == 0.0 and Recall == 0.0 :
                     F1 = 0.0
                 else :
                     F1 = 2 * (Recall * Precision) / (Recall + Precision)
 
+                self.confusion_m['Accuracy'].append(Accuracy)
                 self.confusion_m['Precision'].append(Precision)
                 self.confusion_m['Recall'].append(Recall)
                 self.confusion_m['F1'].append(F1)

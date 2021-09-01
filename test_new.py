@@ -1,10 +1,76 @@
 import os
+import numpy as np
 import json
 import configparser
 from utils import get_metric, dir_exist_check, gpu_limit, Dataloader, results_analysis, WriteResults
 from model import get_model
 
+def get_an_score(test_x) :
+    recon = model(test_x)
+    mean, median, maximum, minimum = LOSS(recon, test_x)
+    mean = mean.numpy()
+
+    return mean, median, maximum, minimum
+
+def get_an_score_usad(test_x, alpha) :
+    w1, w2, w3 = model(test_x)
+    mean, median, maximum, minimum = LOSS(step=3, recon=w1, rerecon=w3, origin=test_x, a = alpha)
+
+    return mean, median, maximum, minimum
+
+def test_step_usad(test_path) :
+    as_ = np.arange(0, 1.1, 0.1)
+
+    for a in as_ :
+        sub_test_path = os.path.join(test_path, str(a))
+        dir_exist_check([sub_test_path])
+
+        test_step(sub_test_path, model_key = 'USAD', alpha = a)
+
+
+def test_step(test_path, model_key = 'NA', alpha = 1) :
+    # Test inference
+    test_results = {}
+    test_results['filename'] = []
+    test_results['label'] = []
+    test_results['mean'] = []
+    test_results['median'] = []
+    test_results['maximum'] = []
+    test_results['minimum'] = []
+
+    for i, test_data in enumerate(test_loader) :
+        print("Testing : {} / {}".format(i + 1, len(test_loader)), end="\r")
+        test_x, test_y, filename = test_data
+
+
+
+        # recon = model(test_x)
+        if model_key == 'USAD' :
+            mean, median, maximum, minimum = get_an_score_usad(test_x, alpha)
+        else :
+            mean, median, maximum, minimum = get_an_score(test_x)
+        # mean = mean.numpy()
+
+        test_results['filename'].append(filename)
+        test_results['label'].append(test_y)
+        test_results['mean'].append(mean)
+        test_results['median'].append(median)
+        test_results['maximum'].append(maximum)
+        test_results['minimum'].append(minimum)
+
+    analysis = results_analysis(test_results)
+    analyzed_results = analysis.get_metric()
+    # print(analyzed_results)
+
+    WriteResults(test_results, analyzed_results, test_path)
+
+
+
 def test(main_dir, test_path) :
+    global model
+    global LOSS
+    global test_loader
+
     # basic configuration
     config = configparser.ConfigParser()
     config.read('./config.ini')
@@ -28,7 +94,7 @@ def test(main_dir, test_path) :
 
     ## metric setup
     metric = json_data['metric']
-    LOSS = get_metric(metric)
+    LOSS = get_metric(metric, model_key)
 
     # lr = float(json_data['learning_rate'])
     # epochs = int(json_data['epochs'])
@@ -56,36 +122,12 @@ def test(main_dir, test_path) :
     # print(weight_path)
     model.load_weights(weight_path)
 
+    if model_key == 'USAD' :
+        test_step_usad(test_path)
 
-    # Test inference
-    test_results = {}
-    test_results['filename'] = []
-    test_results['label'] = []
-    test_results['mean'] = []
-    test_results['median'] = []
-    test_results['maximum'] = []
-    test_results['minimum'] = []
+    else :
+        test_step(test_path)
 
-    for i, test_data in enumerate(test_loader) :
-        print("Training : {} / {}".format(i + 1, len(test_loader)), end="\r")
-        test_x, test_y, filename = test_data
-
-        recon = model(test_x)
-        mean, median, maximum, minimum = LOSS(recon, test_x)
-        mean = mean.numpy()
-
-        test_results['filename'].append(filename)
-        test_results['label'].append(test_y)
-        test_results['mean'].append(mean)
-        test_results['median'].append(median)
-        test_results['maximum'].append(maximum)
-        test_results['minimum'].append(minimum)
-
-    analysis = results_analysis(test_results)
-    analyzed_results = analysis.get_metric()
-    # print(analyzed_results)
-
-    WriteResults(test_results, analyzed_results, test_path)
 
 
 def make_test_results() :

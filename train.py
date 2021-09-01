@@ -11,7 +11,7 @@ def train_step_usad(train_x, epoch) :
 
     with tf.GradientTape(persistent=True) as tape:
         w1, w2, w3 = model(train_x)
-        loss1 = LOSS(1, w1, w3, train_x, epoch+1)
+        loss1 = LOSS(step=1, recon=w1, rerecon=w3, origin=train_x, n=epoch+1)
 
     gradients_enc = tape.gradient(loss1, model.encoder.trainable_variables)
     gradients_dec = tape.gradient(loss1, model.decoder.trainable_variables)
@@ -20,7 +20,7 @@ def train_step_usad(train_x, epoch) :
 
     with tf.GradientTape(persistent=True) as tape:
         w1, w2, w3 = model(train_x)
-        loss2 = LOSS(2, w2, w3, train_x, epoch+1)
+        loss2 = LOSS(step=2, recon=w2, rerecon=w3, origin=train_x, n=epoch+1)
 
     gradients_enc = tape.gradient(loss2, model.encoder.trainable_variables)
     gradients_dec = tape.gradient(loss2, model.decoder2.trainable_variables)
@@ -192,10 +192,10 @@ def train() :
         if model_key == 'USAD' :
             train_loss2_avg = sum(train_loss2) / len(train_loss2)
             val_loss2_avg = sum(val_loss2) / len(val_loss2)
-            results['train_loss1'].append(train_loss_avg)
-            results['train_loss2'].append(train_loss2_avg)
-            results['val_loss1'].append(val_loss_avg)
-            results['val_loss2'].append(val_loss2_avg)
+            results['train_loss1'].append(train_loss_avg.numpy())
+            results['train_loss2'].append(train_loss2_avg.numpy())
+            results['val_loss1'].append(val_loss_avg.numpy())
+            results['val_loss2'].append(val_loss2_avg.numpy())
 
         model.save_weights(os.path.join(save_path, "{}epoch_weights".format(epoch + 1)))
 
@@ -211,8 +211,8 @@ def train() :
                     model.save_weights(os.path.join(save_path, "Best_weights".format(epoch +1)))
 
         if model_key == 'USAD' :
-            results['train_loss'].append((train_loss_avg+train_loss2_avg)/2)
-            results['val_loss'].append((val_loss_avg+val_loss2_avg)/2)
+            results['train_loss'].append(((train_loss_avg+train_loss2_avg)/2).numpy())
+            results['val_loss'].append(((val_loss_avg+val_loss2_avg)/2).numpy())
 
         else :
             results['train_loss'].append(train_loss_avg.numpy())
