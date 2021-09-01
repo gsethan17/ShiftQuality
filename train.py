@@ -1,5 +1,5 @@
 from utils import Dataloader, gpu_limit, dir_exist_check, get_metric, get_optimizer
-from model import get_model
+from model import get_model, get_lstm_model
 import tensorflow as tf
 import configparser
 import pandas as pd
@@ -129,7 +129,10 @@ def train() :
 
 
     # MODEL LOADER
-    model = get_model(model_key, n_timewindow, n_feature, latent_size)
+    if model_key == 'LSTM-AE' :
+        model = get_lstm_model(n_timewindow, n_feature, latent_size)
+    else :
+        model = get_model(model_key, n_timewindow, n_feature, latent_size)
     print("Model is loaded!")
 
     results = {}
@@ -155,13 +158,13 @@ def train() :
 
             # gradients = tape.gradient(loss, model.trainable_variables)
             # OPTIMIZER.apply_gradients(zip(gradients, model.trainable_variables))
-            if model_key == 'MLP' or model_key == 'LSTM' :
-                loss = train_step(train_x)
-                train_loss.append(loss)
-            elif model_key == 'USAD' :
+            if model_key == 'USAD' :
                 loss1, loss2 = train_step_usad(train_x, epoch)
                 train_loss.append(loss1)
                 train_loss2.append(loss2)
+            else :
+                loss = train_step(train_x)
+                train_loss.append(loss)
 
         print("Training is completed...")
         train_loader.on_epoch_end()
@@ -175,13 +178,14 @@ def train() :
 
             # recon = model(val_x)
             # loss, _, _, _ = LOSS(recon, val_x)
-            if model_key == 'MLP' or model_key == 'LSTM' :
-                loss = val_step(val_x)
-                val_loss.append(loss)
-            elif model_key == 'USAD' :
+            if model_key == 'USAD' :
                 loss1, loss2 = val_step_usad(val_x, epoch)
                 val_loss.append(loss1)
                 val_loss2.append(loss2)
+            else :
+                loss = val_step(val_x)
+                val_loss.append(loss)
+
         val_loader.on_epoch_end()
         print("Validation is completed...")
 

@@ -3,7 +3,7 @@ import numpy as np
 import json
 import configparser
 from utils import get_metric, dir_exist_check, gpu_limit, Dataloader, results_analysis, WriteResults
-from model import get_model
+from model import get_model, get_lstm_model
 
 def get_an_score(test_x) :
     recon = model(test_x)
@@ -116,7 +116,10 @@ def test(main_dir, test_path) :
 
     # MODEL LOADER
     # print(model_key, n_timewindow, n_feature, latent_size)
-    model = get_model(model_key, n_timewindow, n_feature, latent_size)
+    if model_key == 'LSTM-AE' :
+        model = get_lstm_model(n_timewindow, n_feature, latent_size)
+    else :
+        model = get_model(model_key, n_timewindow, n_feature, latent_size)
     ## load weights
     weight_path = os.path.join(train_path, 'Best_weights')
     # print(weight_path)
