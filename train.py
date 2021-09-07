@@ -139,7 +139,7 @@ def train() :
     results = {}
     results['train_loss'] = []
     results['val_loss'] = []
-    if model_key == 'USAD' :
+    if model_key in USADs :
         results['train_loss1'] = []
         results['train_loss2'] = []
         results['val_loss1'] = []
@@ -205,7 +205,7 @@ def train() :
         model.save_weights(os.path.join(save_path, "{}epoch_weights".format(epoch + 1)))
 
         if epoch > 0:
-            if model_key == 'USAD' :
+            if model_key in USADs :
                 if (val_loss_avg+val_loss2_avg)/2 < min(results['val_loss']):
                     model.save_weights(os.path.join(save_path, "Best_weights".format(epoch + 1)))
 
@@ -230,11 +230,12 @@ def train() :
                 results['val_loss'][-1],))
 
         # early stop
-        if epoch > 5:
-            if results['val_loss'][-5] < min(results['val_loss'][-4:]):
-                print(results['val_loss'][-5])
-                print(min(results['val_loss'][-4:]))
-                break
+        if not model_key in USADs :
+            if epoch > 5:
+                if results['val_loss'][-5] < min(results['val_loss'][-4:]):
+                    print(results['val_loss'][-5])
+                    print(min(results['val_loss'][-4:]))
+                    break
 
         df = pd.DataFrame(results)
         df.to_csv(os.path.join(save_path, 'train_results.csv'), index=False)
