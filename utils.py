@@ -56,9 +56,9 @@ def usad_loss(step, recon, rerecon, origin, n=1, a=1) :
 
     return mean.numpy(), median, max, min
 
-def get_metric(key, model_key) :
+def get_metric(key, model_key, USADs) :
     if key == 'rmse' :
-        if model_key == 'USAD' :
+        if model_key in USADs :
             LOSS = usad_loss
 
         else :

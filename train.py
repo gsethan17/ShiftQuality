@@ -80,11 +80,12 @@ def train() :
 
     ## model setup
     model_key = config['MODEL']['KEY']
+    USADs = ['USAD', 'USAD-LSTM']
 
 
     ## train setup
     metric = config['TRAIN']['METRIC']
-    LOSS = get_metric(metric, model_key)
+    LOSS = get_metric(metric, model_key, USADs)
 
     optimizer = config['TRAIN']['OPTIMIZER']
     learning_rate = float(config['TRAIN']['LEARNING_RATE'])
@@ -146,7 +147,7 @@ def train() :
 
     for epoch in range(epochs) :
         train_loss = []
-        if model_key == 'USAD' :
+        if model_key in USADs :
             train_loss2 = []
         for i, train_data in enumerate(train_loader) :
             print("Training : {} / {}".format(i + 1, len(train_loader)), end="\r")
@@ -158,7 +159,7 @@ def train() :
 
             # gradients = tape.gradient(loss, model.trainable_variables)
             # OPTIMIZER.apply_gradients(zip(gradients, model.trainable_variables))
-            if model_key == 'USAD' :
+            if model_key in USADs :
                 loss1, loss2 = train_step_usad(train_x, epoch)
                 train_loss.append(loss1)
                 train_loss2.append(loss2)
@@ -170,7 +171,7 @@ def train() :
         train_loader.on_epoch_end()
 
         val_loss = []
-        if model_key == 'USAD' :
+        if model_key in USADs :
             val_loss2 = []
         for j, val_data in enumerate(val_loader) :
             print("Validation : {} / {}".format(j + 1, len(val_loader)), end="\r")
@@ -178,7 +179,7 @@ def train() :
 
             # recon = model(val_x)
             # loss, _, _, _ = LOSS(recon, val_x)
-            if model_key == 'USAD' :
+            if model_key in USADs :
                 loss1, loss2 = val_step_usad(val_x, epoch)
                 val_loss.append(loss1)
                 val_loss2.append(loss2)
@@ -193,7 +194,7 @@ def train() :
         # save results
         train_loss_avg = sum(train_loss) / len(train_loss)
         val_loss_avg = sum(val_loss) / len(val_loss)
-        if model_key == 'USAD' :
+        if model_key in USADs :
             train_loss2_avg = sum(train_loss2) / len(train_loss2)
             val_loss2_avg = sum(val_loss2) / len(val_loss2)
             results['train_loss1'].append(train_loss_avg.numpy())
@@ -214,7 +215,7 @@ def train() :
                     # save best weights
                     model.save_weights(os.path.join(save_path, "Best_weights".format(epoch +1)))
 
-        if model_key == 'USAD' :
+        if model_key in USADs :
             results['train_loss'].append(((train_loss_avg+train_loss2_avg)/2).numpy())
             results['val_loss'].append(((val_loss_avg+val_loss2_avg)/2).numpy())
 

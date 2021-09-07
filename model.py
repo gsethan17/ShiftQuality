@@ -4,7 +4,7 @@ from tensorflow.keras.layers import LSTM, RepeatVector, TimeDistributed, Dense, 
 
 
 def get_model(key, n_timewindow, n_feature, latent_size, show=False) :
-    model = FC_AE(key=key, n_timewindow=n_timewindow, n_feature=n_feature, latent_size=latent_size, show=show)
+    model = AE(key=key, n_timewindow=n_timewindow, n_feature=n_feature, latent_size=latent_size, show=show)
 
     return model
 
@@ -55,7 +55,7 @@ class FC_Encoder(Model) :
 
 
 class FC_Decoder(Model):
-    def __init__(self, key, n_timewindow, n_feature, show = False):
+    def __init__(self, key, n_timewindow, n_feature, show=False):
         super().__init__()
         self.key = key
         self.show = show
@@ -96,7 +96,7 @@ class FC_Decoder(Model):
 
         return out
 
-class FC_AE(Model) :
+class AE(Model) :
     def __init__(self, key, n_timewindow, n_feature, latent_size, show = False):
         super().__init__()
         self.key = key
@@ -104,10 +104,15 @@ class FC_AE(Model) :
         self.n_timewindow = n_timewindow
         self.n_feature = n_feature
         self.latent_size = latent_size
-        self.encoder = FC_Encoder(key=self.key, latent_size=self.latent_size, show=self.show)
-        self.decoder = FC_Decoder(self.key, self.n_timewindow, self.n_feature, show=self.show)
-        self.decoder2 = FC_Decoder(self.key, self.n_timewindow, self.n_feature, show=self.show)
-        self.flat = Flatten()
+        if self.key == 'USAD-LSTM' :
+            self.encoder = LSTM_Encoder(self.key, self.n_feature, self.latent_size, show=self.show)
+            self.decoder = LSTM_Decoder(self.key, self.n_timewindow, self.n_feature, self.latent_size, show=self.show)
+            self.decoder2 = LSTM_Decoder(self.key, self.n_timewindow, self.n_feature, self.latent_size, show=self.show)
+        else :
+            self.encoder = FC_Encoder(key=self.key, latent_size=self.latent_size, show=self.show)
+            self.decoder = FC_Decoder(self.key, self.n_timewindow, self.n_feature, show=self.show)
+            self.decoder2 = FC_Decoder(self.key, self.n_timewindow, self.n_feature, show=self.show)
+            self.flat = Flatten()
 
     def call(self, x):
         batch_size = x.shape[0]
@@ -120,19 +125,72 @@ class FC_AE(Model) :
 
             return out
 
-        elif self.key == 'USAD' :
+        elif self.key == 'USAD' or self.key == 'USAD-LSTM' :
             z = self.encoder(x)
             w1 = self.decoder(z)
-            w1 = tf.reshape(w1, shape=[batch_size, self.n_timewindow, self.n_feature])
+            if self.key == 'USAD' :
+                w1 = tf.reshape(w1, shape=[batch_size, self.n_timewindow, self.n_feature])
             w2 = self.decoder2(z)
-            w2 = tf.reshape(w2, shape=[batch_size, self.n_timewindow, self.n_feature])
+            if self.key == 'USAD' :
+                w2 = tf.reshape(w2, shape=[batch_size, self.n_timewindow, self.n_feature])
             w3 = self.decoder2(self.encoder(w1))
-            w3 = tf.reshape(w3, shape=[batch_size, self.n_timewindow, self.n_feature])
+            if self.key == 'USAD' :
+                w3 = tf.reshape(w3, shape=[batch_size, self.n_timewindow, self.n_feature])
 
             return w1, w2, w3
 
         else :
             return -1
+
+class LSTM_Encoder(Model):
+    def __init__(self, key, n_feature, latent_size, show=False):
+        super().__init__()
+        self.key = key
+        self.show = show
+        self.n_feature = n_feature
+        self.latent_size = latent_size
+        self.enc1 = LSTM(int(self.n_feature/2), return_sequences=True, name='enc1')
+        self.enc2 = LSTM(self.latent_size, name='enc2')
+
+    def show_shape(self, out):
+        if self.show:
+            print(out.shape)
+
+    def call(self, x):
+        out = self.enc1(x)
+        self.show_shape(out)
+        out = self.enc2(out)
+        self.show_shape(out)
+
+        return out
+
+
+class LSTM_Decoder(Model):
+    def __init__(self, key, n_timewindow, n_feature, latent_size, show=False):
+        super().__init__()
+        self.key = key
+        self.show = show
+        self.n_timewindow = n_timewindow
+        self.n_feature = n_feature
+        self.latent_size = latent_size
+        self.dec1 = RepeatVector(self.n_timewindow, name='dec1')
+        self.dec2 = LSTM(self.latent_size, return_sequences=True, name='dec2')
+        self.dec3 = TimeDistributed(Dense(self.n_feature), name='dec3')
+
+    def show_shape(self, out):
+        if self.show:
+            print(out.shape)
+
+    def call(self, x):
+        out = self.dec1(x)
+        self.show_shape(out)
+        out = self.dec2(out)
+        self.show_shape(out)
+        out = self.dec3(out)
+        self.show_shape(out)
+
+        return out
+
 
 def get_lstm_model(n_timewindow, n_feature, latent_size) :
     model = Sequential()
