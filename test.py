@@ -91,10 +91,11 @@ def test(main_dir, test_path) :
 
     ## model setup
     model_key = str(json_data['model'])
+    USADs = ['USAD', 'USAD-LSTM']
 
     ## metric setup
     metric = json_data['metric']
-    LOSS = get_metric(metric, model_key)
+    LOSS = get_metric(metric, model_key, USADs)
 
     # lr = float(json_data['learning_rate'])
     # epochs = int(json_data['epochs'])
@@ -125,7 +126,7 @@ def test(main_dir, test_path) :
     # print(weight_path)
     model.load_weights(weight_path)
 
-    if model_key == 'USAD' :
+    if model_key in USADs :
         test_step_usad(test_path)
 
     else :
