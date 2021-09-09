@@ -113,15 +113,19 @@ class Dataloader(Sequence) :
 
         array = np.array(df)
 
-        inputs = []
+        if self.timewindow == 0 :
+            return array, filename
 
-        n_samples = array.shape[0] - self.timewindow + 1
+        else :
+            inputs = []
 
-        for n in range(n_samples) :
-            inputs.append(array[n:n+self.timewindow])
-        inputs = np.array(inputs)
+            n_samples = array.shape[0] - self.timewindow + 1
 
-        return inputs, filename
+            for n in range(n_samples) :
+                inputs.append(array[n:n+self.timewindow])
+            inputs = np.array(inputs)
+
+            return inputs, filename
 
 
     def __getitem__(self, idx):
