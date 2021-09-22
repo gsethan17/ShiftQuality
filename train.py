@@ -1,5 +1,5 @@
-from utils import Dataloader, gpu_limit, dir_exist_check, get_metric, get_optimizer
-from model import get_model, get_lstm_model
+from utils import Dataloader, gpu_limit, dir_exist_check, get_metric, get_optimizer, rmse_loss
+from model import get_model, get_lstm_model, LSTM_generator, LSTM_discriminator
 import tensorflow as tf
 import configparser
 import pandas as pd
@@ -240,6 +240,147 @@ def train() :
         df = pd.DataFrame(results)
         df.to_csv(os.path.join(save_path, 'train_results.csv'), index=False)
 
+def train_MAD_GAN() :
+    # BASIC CONFIGURATION
+    config = configparser.ConfigParser()
+    config.read('./config.ini')
+
+    ## path setup
+    train_path = config['PATH']['TRAIN']
+    val_path = config['PATH']['VALIDATION']
+
+    ## data shape setup
+    n_timewindow = int(config['DATA']['N_TIMEWINDOW'])
+    n_feature = int(config['DATA']['N_FEATURE'])
+    latent_size = int(config['DATA']['LATENT_SIZE'])
+
+    train_path = os.path.join(train_path, str(n_timewindow))
+    val_path = os.path.join(val_path, str(n_timewindow))
+    test_data_path = config['PATH']['TEST']
+    test_data_path = os.path.join(test_data_path, str(n_timewindow))
+
+    ## model setup
+    model_key = config['MODEL']['KEY']
+
+    ## train setup
+    metric = config['TRAIN']['METRIC']
+    LOSS = tf.keras.losses.BinaryCrossentropy()
+
+    optimizer = config['TRAIN']['OPTIMIZER']
+    learning_rate = float(config['TRAIN']['LEARNING_RATE'])
+    OPTIMIZER = get_optimizer(optimizer, learning_rate)
+
+    epochs = int(config['TRAIN']['EPOCHS'])
+
+    # save path setup
+    save_path_base = os.path.join(os.getcwd(), 'results', 'MAD_GAN', model_key, str(n_timewindow),
+                                  str(learning_rate))
+    save_path = os.path.join(os.getcwd(), 'results', 'MAD_GAN', model_key, str(n_timewindow),
+                             str(learning_rate), 'train')
+    save_path_test = os.path.join(save_path_base, 'test')
+    dir_exist_check([save_path, save_path_test])
+
+    # GPU limitation
+    limit_gb = int(config['GPU']['LIMIT'])
+    # gpu_limit(limit_gb)
+
+    # save parameters
+    param = {}
+    param['special'] = 'MAD-GAN'
+    param['model'] = model_key
+    param['n_timewindow'] = n_timewindow
+    param['n_feature'] = n_feature
+    param['n_latent'] = latent_size
+    param['metric'] = metric
+    param['optimizer'] = optimizer
+    param['learning_rate'] = learning_rate
+    param['epochs'] = epochs
+
+    json_save_path = os.path.join(save_path_base, 'setup.json')
+
+    with open(json_save_path, 'w', encoding='utf-8') as make_file :
+        json.dump(param, make_file, ensure_ascii=False, indent='\t')
+
+
+    # DATA LOADER
+    train_loader = Dataloader(train_path, timewindow=n_timewindow)
+    val_loader = Dataloader(val_path, timewindow=n_timewindow)
+    test_loader = Dataloader(test_data_path, label=True, timewindow=n_timewindow)
+
+    print(len(train_loader), len(val_loader))
+
+    # MODEL LOADER
+    generator = LSTM_generator(model_key, n_timewindow, n_feature)
+    discriminator = LSTM_discriminator(model_key, n_timewindow, n_feature)
+
+    generator.compile(loss=LOSS, optimizer=OPTIMIZER)
+    discriminator.compile(loss=LOSS, optimizer=OPTIMIZER)
+
+    ### dictionary
+
+    # train
+    for epoch in range(epochs) :
+
+        for i, train_data in enumerate(train_loader) :
+            print("Training : {} / {}".format(i + 1, len(train_loader)), end="\r")
+            train_x, _ = train_data
+
+            batch_size = train_x.shape[0]
+            z = tf.random.normal(shape=[batch_size, n_timewindow, latent_size])
+
+            g_z = generator(z)
+            g_z_X = tf.concat([g_z, train_x], axis = 0)
+            y1 = tf.constant([[0.]] * batch_size + [[1.]] * batch_size)
+            discriminator.trainable = True
+            discriminator.train_on_batch(g_z_X, y1)
+
+            z = tf.random.normal(shape=[batch_size, n_timewindow, latent_size])
+            y2 = tf.constant([[1.]] * batch_size)
+            generator.train_on_batch(z, y2)
+
+
+        train_loader.on_epoch_end()
+
+        if epoch % 10 == 9 :
+            # save weights
+            temp_path = os.path.join(save_path_test, '{}'.format(epoch+1))
+            generator.save_weights(os.path.join(temp_path, 'generator'))
+            discriminator.save_weights(os.path.join(temp_path, 'discriminator'))
+
+            # test_MAD_GAN(generator, discriminator, test_loader, n_timewindow, latent_size)
+    print("Training is completed...")
+
+def test_MAD_GAN(generator, discriminator, test_loader, n_timewindow, latent_size) :
+
+    recon_loss = rmse_loss
+
+    for i, test_data in enumerate(test_loader):
+        print("Testing : {} / {}".format(i + 1, len(test_loader)), end="\r")
+        test_x, test_y, filename = test_data
+
+        # mapping testing data to latent space
+        batch_size = test_x.shape[0]
+
+        losses = []
+        for i in range(1000) :
+            z = tf.random.normal(shape=[batch_size, n_timewindow, latent_size])
+            g_z = generator(z)
+
+            loss = tf.keras.losses.MeanSquaredError(test_x, g_z)
+            losses.append(loss)
+
+            if len(losses) > 0 :
+                if loss == min(losses) :
+                    g_z_opt = g_z
+                    loss_opt = loss
+
+        d_x = discriminator(test_x)
+        y = tf.constant([[0.]] * batch_size)
+        tf.keras.losses.BinaryCrossentropy(y, d_x)
+
+
+
 
 if __name__ == '__main__' :
-    train()
+    # train()
+    train_MAD_GAN()

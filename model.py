@@ -96,6 +96,45 @@ class FC_Decoder(Model):
 
         return out
 
+class LSTM_generator(Model):
+    def __init__(self, key, n_timewindow, n_feature, show=False):
+        super().__init__()
+        self.key = key
+        self.show = show
+        self.gen1 = LSTM(int(n_feature/2), return_sequences=True, name='gen1')
+        self.gen2 = LSTM(n_feature, return_sequences=True, name='gen2')
+
+    def show_shape(self, out):
+        if self.show :
+            print(out.shape)
+
+    def call(self, x):
+        out = self.gen1(x)
+        self.show_shape(out)
+        out = self.gen2(out)
+        self.show_shape(out)
+
+class LSTM_discriminator(Model):
+    def __init__(self, key, n_timewindow, n_feature, show=False):
+        super().__init__()
+        self.key = key
+        self.show = show
+        self.dis1 = LSTM(int(n_feature/2), return_sequences=True, name='dis1')
+        self.flat = Flatten(name='flat')
+        self.dis2 = Dense(1, activation='sigmoid', name='dis2')
+
+    def show_shape(self, out):
+        if self.show :
+            print(out.shape)
+
+    def call(self, x):
+        out = self.dis1(x)
+        self.show_shape(out)
+        out = self.flat(out)
+        self.show_shape(out)
+        out = self.dis2(out)
+        self.show_shape(out)
+
 class AE(Model) :
     def __init__(self, key, n_timewindow, n_feature, latent_size, show = False):
         super().__init__()
