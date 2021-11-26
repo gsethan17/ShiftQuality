@@ -57,7 +57,7 @@ def val_step(val_x) :
     return loss
 
 
-def train() :
+def train(i, j) :
     global model
     global LOSS
     global OPTIMIZER
@@ -71,7 +71,8 @@ def train() :
     val_path = config['PATH']['VALIDATION']
 
     ## data shape setup
-    n_timewindow = int(config['DATA']['N_TIMEWINDOW'])
+    # n_timewindow = int(config['DATA']['N_TIMEWINDOW'])
+    n_timewindow = j
     n_feature = int(config['DATA']['N_FEATURE'])
     latent_size = int(config['DATA']['LATENT_SIZE'])
 
@@ -91,7 +92,8 @@ def train() :
     learning_rate = float(config['TRAIN']['LEARNING_RATE'])
     OPTIMIZER = get_optimizer(optimizer, learning_rate)
 
-    epochs = int(config['TRAIN']['EPOCHS'])
+    # epochs = int(config['TRAIN']['EPOCHS'])
+    epochs = i
 
     # save path setup
     save_path_base = os.path.join(os.getcwd(), 'results', model_key, str(n_timewindow), str(learning_rate) + '_' + str(epochs))
@@ -382,5 +384,11 @@ def test_MAD_GAN(generator, discriminator, test_loader, n_timewindow, latent_siz
 
 
 if __name__ == '__main__' :
-    # train()
-    train_MAD_GAN()
+    # epoch 10 to 50
+    for i in range(10, 60, 10) :
+
+        # timewindow 10 to 100
+        for j in range(10, 110, 10) :
+            print(i, j)
+            train(i, j)
+    # train_MAD_GAN()

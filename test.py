@@ -145,6 +145,10 @@ def make_test_results() :
    # print(model_keys)
 
    for model_key in model_keys :
+       # MAD_GAN skip
+       if model_key == 'MAD_GAN' :
+           pass
+
        model_dir = os.path.join(base_dir, model_key)
 
        timewindows = os.listdir(model_dir)
