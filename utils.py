@@ -189,7 +189,7 @@ class WriteResults() :
             sns.distplot(df_abnormal[standard], label='abnormal', color='red')
             pyplot.axvline(self.rep['Score'][i], 0, 0.8, linestyle='--', label = 'maximize the F1 Score', color='k')
 
-            pyplot.legend(prop={'size': 14})
+            # pyplot.legend(prop={'size': 14})
             pyplot.savefig(os.path.join(self.save_path, standard+'.png'))
             # pyplot.show()
 
