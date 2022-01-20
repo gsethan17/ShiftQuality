@@ -147,7 +147,7 @@ def make_test_results() :
    for model_key in model_keys :
        print(model_key)
        # MAD_GAN skip
-       if not model_key in ['MLP'] :
+       if model_key in ['MAD_GAN', 'SVM_old','SVM'] :
            continue
 
        model_dir = os.path.join(base_dir, model_key)

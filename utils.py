@@ -182,6 +182,7 @@ class WriteResults() :
     def draw_pdf(self):
         df_normal = self.df_total[(self.df_total['label'] == False)].copy()
         df_abnormal = self.df_total[(self.df_total['label'] == True)].copy()
+        xlabels = ['$S^{mean}$', '$S^{median}$', '$S^{max}$', '$S^{min}$']
         for i, standard in enumerate(self.standards) :
 
             pyplot.figure()
@@ -190,6 +191,7 @@ class WriteResults() :
             pyplot.axvline(self.rep['Score'][i], 0, 0.8, linestyle='--', label = 'maximize the F1 Score', color='k')
 
             # pyplot.legend(prop={'size': 14})
+            pyplot.xlabel(xlabels[i])
             pyplot.savefig(os.path.join(self.save_path, standard+'.png'))
             # pyplot.show()
 

@@ -233,13 +233,13 @@ class LSTM_Decoder(Model):
 
 def get_lstm_model(n_timewindow, n_feature, latent_size) :
     model = Sequential()
-    model.add(LSTM(int(n_feature/2), input_shape=(n_timewindow, n_feature), return_sequences=True))
-    # model.add(LSTM(latent_size, input_shape=(n_timewindow, n_feature)))
-    model.add(LSTM(latent_size))
+    # model.add(LSTM(int(n_feature/2), input_shape=(n_timewindow, n_feature), return_sequences=True))
+    model.add(LSTM(latent_size, input_shape=(n_timewindow, n_feature)))
+    # model.add(LSTM(latent_size))
     model.add(RepeatVector(n_timewindow))
-    model.add(LSTM(int(n_feature/2), return_sequences=True))
-    model.add(LSTM(n_feature, return_sequences=True))
-    # model.add(LSTM(latent_size, return_sequences=True))
-    # model.add(TimeDistributed(Dense(n_feature)))
+    # model.add(LSTM(int(n_feature/2), return_sequences=True))
+    # model.add(LSTM(n_feature, return_sequences=True))
+    model.add(LSTM(latent_size, return_sequences=True))
+    model.add(TimeDistributed(Dense(n_feature)))
     print(model.summary())
     return model
