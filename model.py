@@ -1,6 +1,6 @@
 import tensorflow as tf
 from tensorflow.keras.models import Sequential, Model
-from tensorflow.keras.layers import LSTM, RepeatVector, TimeDistributed, Dense, Dropout, Flatten
+from tensorflow.keras.layers import LSTM, RepeatVector, TimeDistributed, Dense, Dropout, Flatten, SimpleRNN, GRU, Input, Reshape
 
 
 def get_model(key, n_timewindow, n_feature, latent_size, show=False) :
@@ -243,3 +243,43 @@ def get_lstm_model(n_timewindow, n_feature, latent_size) :
     model.add(TimeDistributed(Dense(n_feature)))
     print(model.summary())
     return model
+
+
+def get_shallow_model(model_key, n_timewindow, n_feature, latent_size) :
+    model = Sequential()
+    if model_key == 'AE' :
+        model.add(Input(shape=(n_timewindow*n_feature,)))
+        model.add(Flatten())
+        model.add(Dense(latent_size, activation='relu'))
+        model.add(Dense(n_timewindow*n_feature, activation='sigmoid'))
+        model.add(Reshape((n_timewindow, n_feature), input_shape=(n_timewindow*n_feature,)))
+
+    if model_key == 'RNN-AE' :
+        model.add(Input(shape=(n_timewindow, n_feature)))
+        model.add(SimpleRNN(latent_size))
+        model.add(RepeatVector(n_timewindow))
+        model.add(SimpleRNN(latent_size, return_sequences=True))
+        model.add(TimeDistributed(Dense(n_feature, activation='sigmoid')))
+
+    if model_key == 'LSTM-AE' :
+        model.add(Input(shape=(n_timewindow, n_feature)))
+        model.add(LSTM(latent_size))
+        model.add(RepeatVector(n_timewindow))
+        model.add(LSTM(latent_size, return_sequences=True))
+        model.add(TimeDistributed(Dense(n_feature, activation='sigmoid')))
+
+    if model_key == 'GRU-AE' :
+        model.add(Input(shape=(n_timewindow, n_feature)))
+        model.add(GRU(latent_size,))
+        model.add(RepeatVector(n_timewindow))
+        model.add(GRU(latent_size, return_sequences=True))
+        model.add(TimeDistributed(Dense(n_feature, activation='sigmoid')))
+
+    print(model.summary())
+    return model
+
+if __name__ == '__main__' :
+    model_keys = ['AE', 'RNN-AE', 'LSTM-AE', 'GRU-AE']
+
+    for model_key in model_keys :
+        get_shallow_model(model_key, 30, 6, 10)

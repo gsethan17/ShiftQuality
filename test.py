@@ -3,7 +3,7 @@ import numpy as np
 import json
 import configparser
 from utils import get_metric, dir_exist_check, gpu_limit, Dataloader, results_analysis, WriteResults
-from model import get_model, get_lstm_model
+from model import get_model, get_lstm_model, get_shallow_model
 
 def get_an_score(test_x) :
     recon = model(test_x)
@@ -117,10 +117,15 @@ def test(main_dir, test_path) :
 
     # MODEL LOADER
     # print(model_key, n_timewindow, n_feature, latent_size)
+    '''
     if model_key == 'LSTM-AE' :
         model = get_lstm_model(n_timewindow, n_feature, latent_size)
     else :
         model = get_model(model_key, n_timewindow, n_feature, latent_size)
+    '''
+
+    model = get_shallow_model(model_key, n_timewindow, n_feature, latent_size)
+
     ## load weights
     weight_path = os.path.join(train_path, 'Best_weights')
     # print(weight_path)
@@ -135,13 +140,14 @@ def test(main_dir, test_path) :
 
 
 def make_test_results() :
-   base_dir = os.path.join(os.getcwd(), 'results')
+   base_dir = os.path.join(os.getcwd(), 'full_data')
 
    if not os.path.isdir(base_dir) :
        print('There are no results that have completed the training.')
        return -1
 
-   model_keys = os.listdir(base_dir)
+   # model_keys = os.listdir(base_dir)
+   model_keys = ['AE']
    # print(model_keys)
 
    for model_key in model_keys :

@@ -1,5 +1,5 @@
 from utils import Dataloader, gpu_limit, dir_exist_check, get_metric, get_optimizer, rmse_loss
-from model import get_model, get_lstm_model, LSTM_generator, LSTM_discriminator
+from model import get_model, get_lstm_model, LSTM_generator, LSTM_discriminator, get_shallow_model
 import tensorflow as tf
 import configparser
 import pandas as pd
@@ -57,7 +57,7 @@ def val_step(val_x) :
     return loss
 
 
-def train(i, j) :
+def train(model_key, i, j) :
     global model
     global LOSS
     global OPTIMIZER
@@ -80,7 +80,7 @@ def train(i, j) :
     val_path = os.path.join(val_path, str(n_timewindow))
 
     ## model setup
-    model_key = config['MODEL']['KEY']
+    # model_key = config['MODEL']['KEY']
     USADs = ['USAD', 'USAD-LSTM']
 
 
@@ -96,8 +96,8 @@ def train(i, j) :
     epochs = i
 
     # save path setup
-    save_path_base = os.path.join(os.getcwd(), 'results', model_key, str(n_timewindow), str(learning_rate) + '_' + str(epochs))
-    save_path = os.path.join(os.getcwd(), 'results', model_key, str(n_timewindow), str(learning_rate) + '_' + str(epochs), 'train')
+    save_path_base = os.path.join(os.getcwd(), 'full_data', model_key, str(n_timewindow), str(learning_rate) + '_' + str(epochs))
+    save_path = os.path.join(os.getcwd(), 'full_data', model_key, str(n_timewindow), str(learning_rate) + '_' + str(epochs), 'train')
     dir_exist_check([save_path])
     # os.makedirs(save_path)
 
@@ -132,10 +132,13 @@ def train(i, j) :
 
 
     # MODEL LOADER
+    '''
     if model_key == 'LSTM-AE' :
         model = get_lstm_model(n_timewindow, n_feature, latent_size)
     else :
         model = get_model(model_key, n_timewindow, n_feature, latent_size)
+    '''
+    model = get_shallow_model(model_key, n_timewindow, n_feature, latent_size)
     print("Model is loaded!")
 
     results = {}
@@ -365,6 +368,7 @@ def test_MAD_GAN(generator, discriminator, test_loader, n_timewindow, latent_siz
 
         losses = []
         for i in range(1000) :
+            val_normal_list = random.sample(normal_data_list, int(len(normal_data_list)*0.2))
             z = tf.random.normal(shape=[batch_size, n_timewindow, latent_size])
             g_z = generator(z)
 
@@ -384,6 +388,12 @@ def test_MAD_GAN(generator, discriminator, test_loader, n_timewindow, latent_siz
 
 
 if __name__ == '__main__' :
+    # model_keys = ['RNN-AE', 'LSTM-AE', 'GRU-AE', 'AE']
+    model_keys = ['AE']
+    for model_key in model_keys :
+        for i in range(10, 110, 10) :
+            train(model_key, 50, i)
+    '''
     # epoch 10 to 50
     for i in range(10, 60, 10) :
 
@@ -392,3 +402,4 @@ if __name__ == '__main__' :
             print(i, j)
             train(i, j)
     # train_MAD_GAN()
+    '''

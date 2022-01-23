@@ -133,6 +133,7 @@ dmypy.json
 
 # results
 results*/
+full_data/
 *.png
 
 # etc
