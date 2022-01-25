@@ -256,10 +256,10 @@ def get_shallow_model(model_key, n_timewindow, n_feature, latent_size) :
 
     if model_key == 'RNN-AE' :
         model.add(Input(shape=(n_timewindow, n_feature)))
-        model.add(SimpleRNN(latent_size))
-        model.add(RepeatVector(n_timewindow))
-        model.add(SimpleRNN(latent_size, return_sequences=True))
-        model.add(TimeDistributed(Dense(n_feature, activation='sigmoid')))
+        model.add(SimpleRNN(latent_size)) # (10,)
+        model.add(RepeatVector(n_timewindow)) # (n_time, 10)
+        model.add(SimpleRNN(latent_size, return_sequences=True)) # (n_time, 10)
+        model.add(TimeDistributed(Dense(n_feature, activation='sigmoid'))) # (n_time, n_feature)
 
     if model_key == 'LSTM-AE' :
         model.add(Input(shape=(n_timewindow, n_feature)))

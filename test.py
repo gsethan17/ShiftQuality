@@ -147,7 +147,7 @@ def make_test_results() :
        return -1
 
    # model_keys = os.listdir(base_dir)
-   model_keys = ['AE']
+   model_keys = ['AE', 'GRU-AE', 'LSTM-AE', 'RNN-AE']
    # print(model_keys)
 
    for model_key in model_keys :
