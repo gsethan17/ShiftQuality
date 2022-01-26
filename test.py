@@ -66,7 +66,7 @@ def test_step(test_path, model_key = 'NA', alpha = 1) :
 
 
 
-def test(main_dir, test_path) :
+def test(main_dir, test_path, test_layer) :
     global model
     global LOSS
     global test_loader
@@ -124,12 +124,13 @@ def test(main_dir, test_path) :
         model = get_model(model_key, n_timewindow, n_feature, latent_size)
     '''
 
-    model = get_shallow_model(model_key, n_timewindow, n_feature, latent_size)
+    model = get_shallow_model(model_key, n_timewindow, n_feature, latent_size, test_layer)
 
     ## load weights
     weight_path = os.path.join(train_path, 'Best_weights')
     # print(weight_path)
     model.load_weights(weight_path)
+    print("---------model loaded----------")
 
     if model_key in USADs :
         test_step_usad(test_path)
@@ -147,14 +148,16 @@ def make_test_results() :
        return -1
 
    # model_keys = os.listdir(base_dir)
-   model_keys = ['AE', 'GRU-AE', 'LSTM-AE', 'RNN-AE']
+   model_keys = ['AE']
+   layer = 2
    # print(model_keys)
 
-   for model_key in model_keys :
+   for model in model_keys :
+       model_key = model+str(layer)
        print(model_key)
        # MAD_GAN skip
-       if model_key in ['MAD_GAN', 'SVM_old','SVM'] :
-           continue
+       # if model_key in ['MAD_GAN', 'SVM_old','SVM'] :
+           # continue
 
        model_dir = os.path.join(base_dir, model_key)
 
@@ -177,7 +180,7 @@ def make_test_results() :
                                                                param))
                    continue
                else :
-                   test(main_dir, test_dir)
+                   test(main_dir, test_dir, layer)
 
                # return -1
 
