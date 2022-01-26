@@ -96,8 +96,8 @@ def train(model_key, i, j, layer) :
     epochs = i
 
     # save path setup
-    save_path_base = os.path.join(os.getcwd(), 'full_data', model_key, str(n_timewindow), str(learning_rate) + '_' + str(epochs))
-    save_path = os.path.join(os.getcwd(), 'full_data', model_key, str(n_timewindow), str(learning_rate) + '_' + str(epochs), 'train')
+    save_path_base = os.path.join(os.getcwd(), 'full_data', model_key+str(layer), str(n_timewindow), str(learning_rate) + '_' + str(epochs))
+    save_path = os.path.join(os.getcwd(), 'full_data', model_key+str(layer), str(n_timewindow), str(learning_rate) + '_' + str(epochs), 'train')
     dir_exist_check([save_path])
     # os.makedirs(save_path)
 
@@ -388,11 +388,11 @@ def test_MAD_GAN(generator, discriminator, test_loader, n_timewindow, latent_siz
 
 
 if __name__ == '__main__' :
-    # model_keys = ['RNN-AE', 'LSTM-AE', 'GRU-AE', 'AE']
-    model_keys = ['RNN-AE']
-    layer = 2
+    # model_keys = ['RNN-AE', 'LSTM-AE', 'GRU-AE', 'AE', 'CNN-AE']
+    model_keys = ['CNN-AE']
+    layer = 1    # 1 & 2
     for model_key in model_keys :
-        i = 70   # 70, 80, 90, 100, 110, 120
+        i = 10   # range(10, 150, 10)
         train(model_key, 50, i, layer)
         
         '''

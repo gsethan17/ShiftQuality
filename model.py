@@ -1,6 +1,6 @@
 import tensorflow as tf
 from tensorflow.keras.models import Sequential, Model
-from tensorflow.keras.layers import LSTM, RepeatVector, TimeDistributed, Dense, Dropout, Flatten, SimpleRNN, GRU, Input, Reshape
+from tensorflow.keras.layers import LSTM, RepeatVector, TimeDistributed, Dense, Dropout, Flatten, SimpleRNN, GRU, Input, Reshape, Conv1D, MaxPooling1D, UpSampling1D
 
 
 def get_model(key, n_timewindow, n_feature, latent_size, show=False) :
@@ -291,11 +291,27 @@ def get_shallow_model(model_key, n_timewindow, n_feature, latent_size, layer=1) 
         model.add(GRU(latent_size, return_sequences=True))
         model.add(TimeDistributed(Dense(n_feature, activation='sigmoid')))
 
+    if model_key == 'CNN-AE' : 
+        model.add(Input(shape=(n_timewindow, n_feature)))
+        if layer == 2 :
+            model.add(Conv1D(n_feature, 7, activation='relu', padding='same'))
+        model.add(Conv1D(1, 7, activation='relu', padding='same'))
+        model.add(MaxPooling1D(int(n_timewindow/latent_size), padding='same'))
+        model.add(UpSampling1D(int(n_timewindow/latent_size)))
+        if layer == 2 :
+            model.add(Conv1D(1, 7, activation='relu', padding='same'))
+        model.add(Conv1D(n_feature, 7, activation='relu', padding='same'))
+
+
+
+
+
     print(model.summary())
     return model
 
 if __name__ == '__main__' :
     model_keys = ['AE', 'RNN-AE', 'LSTM-AE', 'GRU-AE']
-
+    model_keys = ['CNN-AE']
     for model_key in model_keys :
-        get_shallow_model(model_key, 30, 6, 10, 2)
+        get_shallow_model(model_key, 80, 6, 10, 1)
+        get_shallow_model(model_key, 140, 6, 10, 2)
