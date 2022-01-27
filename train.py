@@ -389,10 +389,10 @@ def test_MAD_GAN(generator, discriminator, test_loader, n_timewindow, latent_siz
 
 if __name__ == '__main__' :
     # model_keys = ['RNN-AE', 'LSTM-AE', 'GRU-AE', 'AE', 'CNN-AE']
-    model_keys = ['CNN-AE']
-    layer = 1    # 1 & 2
+    model_keys = ['GRU-AE']
+    layer = 2    # 1 & 2
     for model_key in model_keys :
-        i = 10   # range(10, 150, 10)
+        i = 140   # range(10, 150, 10)
         train(model_key, 50, i, layer)
         
         '''

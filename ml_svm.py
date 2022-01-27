@@ -12,7 +12,7 @@ val_path = config['PATH']['VALIDATION']
 test_path = config['PATH']['TEST']
 
 ## data shape setup
-n_timewindow = 100
+n_timewindow = 140
 n_features = 6
 
 train_path = os.path.join(train_path, str(n_timewindow))
