@@ -252,9 +252,24 @@ def get_shallow_model(model_key, n_timewindow, n_feature, latent_size, layer=1) 
         model.add(Flatten())
         if layer == 2 :
             model.add(Dense(int((n_timewindow*n_feature)/2), activation ='relu'))
+        elif layer == 3 :
+            model.add(Dense(int(((n_timewindow*n_feature)/3)*2), activation ='relu'))
+            model.add(Dense(int((n_timewindow*n_feature)/3), activation ='relu'))
+        elif layer == 4 :
+            model.add(Dense(int(((n_timewindow*n_feature)/4)*3), activation ='relu'))
+            model.add(Dense(int(((n_timewindow*n_feature)/4)*2), activation ='relu'))
+            model.add(Dense(int(((n_timewindow*n_feature)/4)*1), activation ='relu'))
+
         model.add(Dense(latent_size, activation='relu'))
         if layer == 2 :
             model.add(Dense(int((n_timewindow*n_feature)/2), activation ='relu'))
+        elif layer == 3 :
+            model.add(Dense(int((n_timewindow*n_feature)/3), activation ='relu'))
+            model.add(Dense(int(((n_timewindow*n_feature)/3)*2), activation ='relu'))
+        elif layer == 4 :
+            model.add(Dense(int(((n_timewindow*n_feature)/4)*1), activation ='relu'))
+            model.add(Dense(int(((n_timewindow*n_feature)/4)*2), activation ='relu'))
+            model.add(Dense(int(((n_timewindow*n_feature)/4)*3), activation ='relu'))
         model.add(Dense(n_timewindow*n_feature, activation='sigmoid'))
         model.add(Reshape((n_timewindow, n_feature), input_shape=(n_timewindow*n_feature,)))
 
@@ -311,7 +326,6 @@ def get_shallow_model(model_key, n_timewindow, n_feature, latent_size, layer=1) 
 
 if __name__ == '__main__' :
     model_keys = ['AE', 'RNN-AE', 'LSTM-AE', 'GRU-AE']
-    model_keys = ['CNN-AE']
+    model_keys = ['AE']
     for model_key in model_keys :
-        get_shallow_model(model_key, 80, 6, 10, 1)
-        get_shallow_model(model_key, 140, 6, 10, 2)
+        get_shallow_model(model_key, 80, 6, 10, 3)

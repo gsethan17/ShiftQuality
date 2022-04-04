@@ -66,7 +66,7 @@ def test_step(test_path, model_key = 'NA', alpha = 1) :
 
 
 
-def test(main_dir, test_path, test_layer) :
+def test(main_dir, test_path, test_layer, test_fixed) :
     global model
     global LOSS
     global test_loader
@@ -113,7 +113,7 @@ def test(main_dir, test_path, test_layer) :
     gpu_limit(limit_gb)
 
     # DATA LOADER
-    test_loader = Dataloader(test_data_path, label = True, timewindow=n_timewindow)
+    test_loader = Dataloader(test_data_path, fixed = test_fixed, label = True, timewindow=n_timewindow)
 
     # MODEL LOADER
     # print(model_key, n_timewindow, n_feature, latent_size)
@@ -149,7 +149,8 @@ def make_test_results() :
 
    # model_keys = os.listdir(base_dir)
    model_keys = ['AE']
-   layer = 2
+   layer = 4
+   fixed = False
    # print(model_keys)
 
    for model in model_keys :
@@ -180,7 +181,7 @@ def make_test_results() :
                                                                param))
                    continue
                else :
-                   test(main_dir, test_dir, layer)
+                   test(main_dir, test_dir, layer, fixed)
 
                # return -1
 

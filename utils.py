@@ -8,6 +8,20 @@ import tensorflow as tf
 from tensorflow.keras.utils import Sequence
 from tensorflow.keras.optimizers import Adam
 
+def rmse_loss_naive(recon, origin) :
+    n_timewindow = origin.shape[1]
+    n_feature = origin.shape[2]
+
+    # calculate rmse
+    error = tf.math.subtract(recon, origin)
+    error = tf.math.pow(error, 2)
+    error = tf.math.reduce_sum(error, axis = 1)
+    error = tf.math.reduce_sum(error, axis = 1)
+    error = tf.math.divide(error, (n_timewindow*n_feature))
+    error = tf.math.sqrt(error)
+    
+    return error
+
 def rmse_loss(recon, origin) :
     n_timewindow = origin.shape[1]
     n_feature = origin.shape[2]
@@ -74,9 +88,10 @@ def get_optimizer(key, lr) :
 
 
 class Dataloader(Sequence) :
-    def __init__(self, path, label = False, timewindow = 100, batch_size=1, shuffle=True):
+    def __init__(self, path, fixed = False, label = False, timewindow = 100, batch_size=1, shuffle=True):
         self.path = path
         self.label = label
+        self.fixed = fixed
         self.data_list = glob.glob(os.path.join(self.path, '*.csv'))
         self.timewindow = timewindow
         self.batch_size = batch_size
@@ -118,8 +133,11 @@ class Dataloader(Sequence) :
 
         else :
             inputs = []
-
-            n_samples = array.shape[0] - self.timewindow + 1
+            
+            if self.fixed == False : 
+                n_samples = array.shape[0] - self.timewindow + 1
+            else :
+                n_samples = 1
 
             for n in range(n_samples) :
                 inputs.append(array[n:n+self.timewindow])
@@ -340,3 +358,12 @@ class results_analysis() :
             self.confusion_m_init()
 
         return self.results
+
+if __name__ == "__main__" :
+
+    loader = Dataloader('/home/gsethan/Documents/ShiftQuality/train/120', fixed = True, label=True)
+    
+    for i, train_data in enumerate(loader) :
+        train_x, train_y, filename = train_data
+        print(train_x.shape, filename)
+

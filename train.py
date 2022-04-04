@@ -57,7 +57,7 @@ def val_step(val_x) :
     return loss
 
 
-def train(model_key, i, j, layer) :
+def train(model_key, i, j, layer, train_fixed) :
     global model
     global LOSS
     global OPTIMIZER
@@ -125,8 +125,8 @@ def train(model_key, i, j, layer) :
 
 
     # DATA LOADER
-    train_loader = Dataloader(train_path, timewindow=n_timewindow)
-    val_loader = Dataloader(val_path, timewindow=n_timewindow)
+    train_loader = Dataloader(train_path, fixed = train_fixed, timewindow=n_timewindow)
+    val_loader = Dataloader(val_path, fixed = train_fixed, timewindow=n_timewindow)
 
     print(len(train_loader), len(val_loader))
 
@@ -389,16 +389,16 @@ def test_MAD_GAN(generator, discriminator, test_loader, n_timewindow, latent_siz
 
 if __name__ == '__main__' :
     # model_keys = ['RNN-AE', 'LSTM-AE', 'GRU-AE', 'AE', 'CNN-AE']
-    model_keys = ['GRU-AE']
-    layer = 2    # 1 & 2
+    model_keys = ['AE']
+    layer = 4    # 1 & 2
+    fixed = False
+
     for model_key in model_keys :
-        i = 140   # range(10, 150, 10)
-        train(model_key, 50, i, layer)
+        # i = 40   # range(10, 150, 10)
+        # train(model_key, 50, i, layer, fixed)
         
-        '''
-        for i in range(130, 150, 10) :
-            train(model_key, 50, i, layer)
-        '''
+        for i in range(60, 90, 10) :
+            train(model_key, 50, i, layer, fixed)
     '''
     # epoch 10 to 50
     for i in range(10, 60, 10) :
